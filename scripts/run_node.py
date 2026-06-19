@@ -97,6 +97,13 @@ def run_node09() -> None:
     print("node09 FHV pricing written to {}".format(destination))
 
 
+def run_node10() -> None:
+    from src.dispatch_optimization import write_dispatch_outputs
+
+    destination = write_dispatch_outputs()
+    print("node10 vehicle allocation written to {}".format(destination))
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run a modeling node.")
     parser.add_argument("--node", required=True, help="Node id, for example node00.")
@@ -135,6 +142,9 @@ def main() -> int:
         return 0
     if node == "node09":
         run_node09()
+        return 0
+    if node == "node10":
+        run_node10()
         return 0
     raise SystemExit(
         "{} is not implemented yet. Complete nodes sequentially.".format(args.node)

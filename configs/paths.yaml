@@ -41,3 +41,5 @@ node_outputs:
   node08_fhv_distance: "outputs/tables/fhv_with_estimated_distance.csv"
   node09_fhv_pricing: "outputs/tables/fhv_pricing_results.csv"
   node09_pricing_summary: "outputs/tables/node09_pricing_model_summary.csv"
+  node10_vehicle_allocation: "outputs/tables/vehicle_allocation_12pm.csv"
+  node10_revenue_gain_summary: "outputs/tables/node10_revenue_gain_summary.csv"

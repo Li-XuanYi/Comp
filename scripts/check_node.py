@@ -374,6 +374,33 @@ def check_node09() -> List[str]:
     return failures
 
 
+def check_node10() -> List[str]:
+    failures = []
+    allocation_path = PROJECT_ROOT / "outputs" / "tables" / "vehicle_allocation_12pm.csv"
+    summary_path = PROJECT_ROOT / "outputs" / "tables" / "node10_revenue_gain_summary.csv"
+    fig_path = PROJECT_ROOT / "outputs" / "figures" / "vehicle_allocation_map.png"
+    for path in [allocation_path, summary_path, fig_path]:
+        if not path.exists():
+            failures.append("missing: {}".format(path.relative_to(PROJECT_ROOT)))
+    if failures:
+        return failures
+    allocation = pd.read_csv(allocation_path)
+    for count in [50, 100, 200]:
+        column = "vehicles_N{}".format(count)
+        if column not in allocation.columns:
+            failures.append("missing allocation column {}".format(column))
+            continue
+        if int(allocation[column].sum()) != count:
+            failures.append("{} sums to {}, expected {}".format(column, allocation[column].sum(), count))
+        if allocation[column].lt(0).any():
+            failures.append("{} has negative vehicles".format(column))
+        if not (allocation[column] == allocation[column].astype(int)).all():
+            failures.append("{} has non-integer vehicles".format(column))
+    if fig_path.stat().st_size <= 0:
+        failures.append("vehicle allocation figure is empty")
+    return failures
+
+
 CHECKS: Dict[str, Callable[[], List[str]]] = {
     "node00": check_node00,
     "node01": check_node01,
@@ -385,6 +412,7 @@ CHECKS: Dict[str, Callable[[], List[str]]] = {
     "node07": check_node07,
     "node08": check_node08,
     "node09": check_node09,
+    "node10": check_node10,
 }
 
 
