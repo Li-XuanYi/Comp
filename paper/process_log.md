@@ -20,6 +20,16 @@
   - Q4 已使用 `33;111;222` 新选址结果，并强调派车方向为基地到需求区。
   - 文本中无占位语、待办标记和旧版基地编号残留。
   - 正文引用的关键图片均已复制到 `paper/figures/`。
-- 本轮修改：补齐图片资源；将 Q1 指标表中的未记录值由 `--` 改为“未单独记录”，避免与流程箭头检查混淆。
+- 本轮修改：补齐图片资源；Q1 指标表保留指标完整的基线与融合模型，Poisson GBDT 单模型 MAE 改在正文说明，避免表格出现缺失项。
 - 编译状态：当前机器未检测到 TeX Live/MacTeX；bundled Tectonic 可执行但需联网下载基础 bundle，因证书/网络错误失败。源码已按 XeLaTeX/ctex 编写，等待可用中文 LaTeX 环境编译。
-
+## 节点 3：论文逻辑审阅与定价约束修正
+- 审阅来源：子 agent 对 `paper/main.tex` 进行只读审阅，重点指出拼车折扣下界、需求转化、利润率口径和灵敏度展示问题。
+- 代码修正：`src/pricing_model.py` 与 `src/sensitivity_analysis.py` 中拼车折扣后的价格下界统一为 `cost * (1 + minimum_profit_rate)`，不再允许低于最低利润底线。
+- 结果刷新：基于已有 `fhv_pricing_results.csv` 重新计算 Q2 定价、Q3 车辆分配、Q4 选址权重与敏感性表；核心结果未发生数值变化，Q2 平均价格 15.96 美元、成本口径平均利润率 56.18%，Q3/Q4 表与修正前一致。
+- 论文修订：补充需求转化系数 `rho`，说明当前 `rho=1` 为可争取需求上界；明确利润率为逐单 `(price-cost)/cost` 的样本均值；改写拼车定价公式；说明 Q3 静态调度为未扣接驾等待的理想上界；将 Q4 目标解释为业务价值加权派车时间而非美元成本；新增关键参数灵敏度表。
+- 编译风险：本机仍缺少完整中文 LaTeX 环境；源码按 XeLaTeX/ctex 编写，可上传 Overleaf 或任一可用 TeX Live 环境编译。
+## 节点 4：最终检查与交付打包
+- 通过检查：`scripts/check_node.py --node node09/node10/node11/node12` 均通过；`pytest tests/test_dispatch.py tests/test_base_location.py tests/test_submission_export.py tests/test_sensitivity_analysis.py -q -p no:cacheprovider` 通过，6 项测试全部成功。
+- 论文结构检查：`main.tex` 中 equation/table/figure/cases/subfigure 环境数量成对匹配；未发现 `TODO`、`待补充`、旧基地 `65;111;222` 或拼车旧下界表述。
+- LaTeX 编译：本地 `compile_latex.py` 检测到项目要求 XeLaTeX，但当前环境没有 TeX Live/MacTeX，因此未生成 PDF。
+- Overleaf 包：已生成 `paper/overleaf_upload.zip`，包含 `main.tex`、`figures/` 和 `template/`，上传 Overleaf 后请选择 XeLaTeX 编译。
