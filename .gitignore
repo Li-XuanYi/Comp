@@ -1,0 +1,25 @@
+# Original source attachments kept outside version control.
+/B题：纽约约租车调度决策.pdf
+/附件*.xlsx
+/附件*.pdf
+/附件7-map/
+
+# Raw and generated data.
+data/raw/
+data/interim/
+data/processed/*.parquet
+outputs/models/
+outputs/logs/
+
+# Local tooling and caches.
+.codegraph/
+.cursor/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+.env
+.DS_Store
+*.tmp
+*.bak
+

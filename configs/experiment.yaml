@@ -1,0 +1,7 @@
+experiment_name: "nyc_fhv_dispatch"
+timezone: "America/New_York"
+target_borough: "Brooklyn"
+target_month: "2019-01"
+target_prediction_date: "2019-02-01"
+notes: "Node-based reproducible modeling workflow for the NYC FHV dispatch problem."
+

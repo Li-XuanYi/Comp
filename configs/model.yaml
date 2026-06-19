@@ -1,0 +1,22 @@
+random_seed: 20260619
+
+demand:
+  target_date: "2019-02-01"
+  validation_start: "2019-01-25"
+  validation_end: "2019-01-31"
+  baseline_methods:
+    - zone_hour_mean
+    - zone_weekday_hour_mean
+    - recent_week_same_hour
+
+pricing:
+  minimum_profit_rate: 0.15
+  discount_rate: 0.08
+  shared_ride_discount_factor: 0.90
+
+dispatch:
+  vehicle_counts: [50, 100, 200]
+
+base_location:
+  n_bases: 3
+
