@@ -1,0 +1,1146 @@
+\documentclass[withoutpreface,bwprint]{cumcmthesis}
+% \documentclass[withoutpreface,bwprint]{cumcmthesis} %去掉封面与编号页，电子版提交的时候使用。
+
+
+\usepackage[framemethod=TikZ]{mdframed}
+\usepackage{url}   % 网页链接
+\usepackage{subcaption} % 子标题
+\usepackage{geometry}
+\usepackage{ulem}
+\usepackage{setspace}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{longtable}
+\graphicspath{{figures/}}
+
+\geometry{a4paper,left=25mm,right=25mm,top=25mm,bottom=25mm}{\tiny }
+\title{基于光线追踪模型的定日镜场优化布局}
+
+
+\begin{document}
+
+ \maketitle
+ \begin{abstract}
+ 	当今世界，能源供需形势严峻，发展高效便捷的清洁能源成为一项重要研究课题。传统光伏发电和风力发电受气象影响大，具有间歇性、波动性和随机性等特点，对电力系统的安全性和供电可靠性造成了挑战。塔式光热镜场发电技术具有发电效率高、可配备大容量储热系统及可实现大规模发电等优点，成为未来太阳能发电的重要方式。本文针对塔式太阳能定日镜布局问题，综合考虑余弦效率、遮挡效率、截断效率、大气透射率等因素，基于几何模型和贪心算法，借助MATLAB等软件进行优化求解。
+ 	
+ 	\textbf{针对问题一:} 在给定定日镜尺寸、高度及位置的情况下，本文对每个定日镜建立坐标系，计算太阳光入射角产生的余弦损失。建立阴影挡光效率模型，求出定日镜之间相互遮挡以及塔影造成的阴影损失。采用光线追迹法，建立光锥坐标系，求得截断效率。最后通过计算大气投射率，各效率乘积即为平均光学效率及输出功率，可用于综合评价定日镜场的聚光性能。求得年平均光学效率为0.5814，单位面积镜面年平均输出热功率为0.4978$kW/m^2$。
+ 	
+ 	\textbf{针对问题二:} 允许调整定日镜尺寸，但所有定日镜尺寸及安装高度仍然相同。问题二是在问题一基础上的优化问题，也可看做单目标规划问题。目标希望最大化单位镜面面积年平均输出热功率。约束条件为定日镜的各个参数。本文采用贪心算法，够将多个约束条件分级处理，寻找问题的近似最优解。求解发现，若要使输出功率尽可能大，吸热塔应当适当南移，定日镜布局应当由南向北由疏到密。
+ 	
+ 	\textbf{针对问题三:} 问题三是基于问题二的进一步优化，不再要求所有定日镜尺寸、安装高度的相等。定日镜场需要在在新的条件下，最大化单位镜面面积年平均输出热功率。在问题二模型的基础上设置新的变量，即可获得优化布局。
+ 	
+ 	最后, 我们对提出的模型进行全面的评价: 本文在综合考虑多方面因素的基础上，利用几何模型对定日镜场进行了较为细致的机理分析,计算了简单的定日镜场光学效率和输出功率。后结合单目标规划，利用贪心算法，通过对多个约束条件的分级处理，较快计算出了定日镜场布局的近似最优解。同时，我们将本文结论与所查阅的文献相对比，结果较为接近，增强了模型的说服力。综上所述，本文模型贴合实际，具有合理性和一定的现实意义。
+ 	
+ 	\keywords{\textbf{定日镜场\quad  光线追迹\quad   单目标规划\quad  贪心算法}}
+	\end{abstract}	
+
+\section{问题重述}
+\subsection{问题背景}
+党的二十大报告明确指出：“积极稳妥推进碳达峰碳中和，立足我国能源资源禀赋，坚持先立后破，有计划分步骤实施碳达峰行动。”因此，实现“双碳”目标，能源是主战场，电力是主力军，新型电力系统则是其中的关键载体。本文研究的塔式太阳能光热发电是一种低碳环保的新型清洁能源技术，利用太阳能无限储量、清洁环保、广泛分布和廉价开发的优势，为“双碳”目标的实现不断提供助力。
+
+塔式太阳能发电系统主要由定日镜场、塔、中央吸热器、传热换热装置、储热装置及热发电装置组成．该技术是利用定日镜绕双轴转动跟踪太阳并将太阳辐射汇聚到塔顶吸热器再利用传热换热装置将获得的热能输送到常规热发电机组，最后获得电能输出。\upcite{王瑞庭2009太阳能塔式电站镜场对地面的遮阳分析}此系统规模庞大、聚光比高，且后端技术成熟，具有极大发展潜力，将是未来太阳能热发电的重要方式。但塔式系统中，镜场成本约占整个电站投资总额的30\%$\sim$ 50\%。\upcite{张茂龙2016塔式太阳能镜场阴影与遮挡效率的改进算法}因此，分析定日镜的能量损耗问题，计算其发电效率，有助于布置高效率、低成本的定日镜场，推动新能源产业的发展，具有重要研究意义。
+
+\subsection{问题要求}
+题目计划在中心位于东经98.5°，北纬39.4°，海拔3000 m，半径350m的圆形区域内建设一个圆形定日镜场，场中安装规定高度的吸收塔和集热器。根据定日镜安装的距离要求和定日镜自身的规格要求，建模解决下列问题：
+
+\begin{itemize}
+	\item [(1)] 
+	将吸收塔建于该圆形定日镜场中心，定日镜尺寸均为 6 m×6 m，安装高度均为4 m，基于附件给定的所有定日镜中心的位置，建立模型计算该定日镜场的年平均光学效率、年平均输出热功率，以及单位镜面面积年平均输出热功率。
+	\item [(2)]
+	假定所有定日镜尺寸及安装高度相同，定日镜场的额定年平均输出热功率为 60 MW。建立数学优化模型，综合考虑定日镜场的吸收塔的位置坐标、定日镜尺寸、安装高度、定日镜数目、定日镜位置，使得定日镜场在达到额定功率的条件下，单位镜面面积年平均输出热功率尽量大。
+	\item [(3)]
+	允许定日镜尺寸、安装高度不同,额定功率为60MW，基于前两问的模型重新设计(2)中定日镜场的各个参数，使得定日镜场在达到额定功率的条件下，单位镜面面积年平均输出热功率尽量大。
+\end{itemize}        
+
+\section{问题分析}
+\subsection{问题一的分析}
+问题一希望在给定定日镜尺寸、高度及位置的情况下计算每月21日平均光学效率及输出功率。为了综合评价定日镜场的聚光性能，采用“月平均法”计算平均值以近似代表定日镜场的年平均光学效率及输出功率。
+
+平均光学效率和输出热功率涉及多个因素的综合考虑。查阅题目提供的参考文献\upcite{张平2021太阳能塔式光热镜场光学效率计算方法}，根据附录中所提供的公式光学效率及输出热功率公式，取镜面反射率$\eta _{ref}$为常数0.92，需要建立数学模型计算阴影遮挡效率$\eta _{sb}$，余弦效率$\eta _{cos}$，大气透射率$\eta _{at}$，集热器截断效率$\eta _{trunc}$，法向直接辐射辐照度DNI。题目以圆形区域中心为原点，正东方向为x轴正向，正北方向为y轴正向，垂直于地面向上方向为z轴正向建立镜场坐标系。附件中已经给出所有定日镜中心的位置，需以各定日镜中心为原点建立第i个定日镜坐标系$X_iY_iZ_i$，即可计算太阳高度角、方位角以及定日镜法线的高度角、方位角，从而得到所需各项数值，进一步得到定日镜场的光学效率及输出热功率。
+
+\subsection{问题二的分析}
+问题二假定所有定日镜尺寸及安装高度相同，在定日镜场的达到额定年平均输出热功率 60 MW的条件下，设计定日镜场的各个参数，使得单位镜面面积年平均输出热功率尽量大。
+
+问题二实质上是优化问题，吸收塔和集热器的高度给定，相较于第一问，是在已知额定功率的情况下给出定日镜场的布局。约束条件为定日镜之间、定日镜与吸收塔之间的位置关系，定日镜尺寸，额定输出功率等，目标得到单位镜面面积年平均输出最大热功率。由于定日镜场规模庞大，且约束条件较多，倘若遍历每一种布局需要极长的时间，一般的方法便失去了可行性。
+
+许多国内外学者已结合定日镜场优化布置问题与智能优化算法，提出多种低成本、高效率的镜场布局。例如程小龙\upcite{程小龙2018基于光学效率的塔式电站镜场布局优化设计研究}依托于传统的径向交错布局方式设计镜场，基于图形法来布置
+定日镜，Arrif \upcite{arrif2021optimisation}等结合人工蜂群算法对镜场进行优化并搜索最优解。本文采用贪心算法，它能够将复杂的问题分级处理，做出在当前看来是最优的选择，时间复杂度低，便于寻找问题的近似最优解。
+
+\subsection{问题三的分析}
+问题三在问题二的基础上，减少了对定日镜尺寸、安装高度的约束，希望基于问题二的模型，使得定日镜场在新的条件下，单位镜面面积年平均输出热功率尽量大。只需在问题二模型的基础上设置新的变量，将定日镜尺寸，安装高度同时放入计算，即可获得优化布局。但约束条件的放宽会导致布局方案的指数型增长，需要对贪心算法进一步优化。
+
+\section{模型假设}
+\begin{itemize}
+	\item [(1)] 
+	假设每个镜子之间差异忽略不计。
+	\item [(2)]
+	假设可以用镜子上大量点代替所有点。
+	\item [(3)]
+	假设各个定日镜场控制系统能够保证定日镜场每时刻角度能使太阳光线能经过定日镜中心反射到集热器中心。
+	\item [(4)]
+	假设塔产生的阴影近似为矩形。
+	\item [(5)]
+	假设镜子高度对海拔产生的影响可以忽略。
+\end{itemize}  
+
+\section{符号说明}
+本文定义了如下使用次数较多的符号, 其余符号在使用时注明。
+	\begin{longtable}{cc}
+		\caption{符号说明}\label{tab:001} \\
+		\toprule[1.5pt]
+		符号 & 含义\\
+		\midrule[1pt]
+		$\alpha_s$ & \ \ 太阳高度角\\
+		$\gamma_s$ & 太阳方位角\\
+		$H_0$ & 海拔高度\\
+		$ h$ & 安装高度\\
+		$ k $ & 镜面高度 \\
+		$ q $ & 镜面边长\\             
+		$N$ & 定日镜总数（单位：面）\\
+		$A_{i}$ & 第$i$面定日镜采光面积（单位：$m^2$）\\
+		$\eta_{i}$ & 第$i$面镜子的光学效率\\ 
+		$\eta_{sb}$ & 阴影遮挡效率\\
+		$\eta_{cos}$ & 余弦效率\\
+		$\eta_{at}$ & 大气透射率\\
+		$\eta_{trunc}$ & 集热器截断效率\\
+		$\eta_{ref}$ & 镜面反射率\\
+		$d_{HR}$ & \ \ 镜面中心到集热器中心的距离（单位：m）\ \ \\
+		$A$ & 定日镜跟踪太阳时的高度角 \\
+		$B$ & 定日镜跟踪太阳时的方位角 \\
+		$ \theta $ & 太阳光的入射角 \\
+		$ \overrightarrow{s} $ & 入射光的单位向量 \\
+		$ \overrightarrow{r} $ & 反射光的单位向量\\
+		\bottomrule[1.5pt]
+	\end{longtable}
+
+\section{问题一模型的建立与求解}
+模型需要结合太阳所在方位，通过附录所给公式计算太阳高度角、方位角，从而计算题目所需的各项数据。除题目所给的镜场坐标系外，建立以各个定日镜中心为原点的定日镜坐标系，如图1。定日镜坐标系$Z_i$轴平行于定日镜法线方向，镜面为$X_iY_i$平面，$X_i$与定日镜水平轴方向平行，红线为太阳光线经过定日镜反射至集热器的路径，$H$为吸热器中心高度，$h$为定日镜中心高度。
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=.5\textwidth]{zuobiaoxi}
+	\caption{定日镜坐标系}
+\end{figure}
+
+		\subsection{余弦效率的计算}
+余弦效率损失是指太阳光入射方向与镜面采光口法线方向不平行而导致的接收能量损失，是镜场中效率损失最为严重的一种。如图2。余弦效率值定义为太阳对定日镜面入射角的余弦值。夹角$\theta$ 越小，余弦效率越高，反之亦然。\upcite{张茂龙2016塔式太阳能镜场阴影与遮挡效率的改进算法}只需计算每月21日9:00、10:30、12:00、13:30、15:00的太阳入射光线与定日镜法线的夹角，即可求得各时段的余弦效率。
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=.5\textwidth]{yuxian}
+	\caption{余弦效率示意图}
+\end{figure}
+根据题目所给公式\cref{eq:taiyang}可求太阳高度角$\alpha_{s}$，太阳方位角$\gamma{s}$，其中其中$\phi$为当地纬度，北纬为正；$\omega$为太阳时角；$\delta$为太阳赤纬角。
+\begin{equation}
+\begin{aligned}
+&\sin\alpha_S=\cos\delta \cos\varphi \cos \omega +\sin \delta \sin\varphi,\\
+&\cos\gamma _s=\frac{\sin \delta -\sin \alpha _s\sin \varphi }{\cos \alpha _s\cos \varphi } .
+\label{eq:taiyang}
+\end{aligned}
+\end{equation}
+
+在题目所给的镜场坐标系$XYZ$中，计算可得入射光线的方向余弦,即有入射光线的单位向量
+\begin{equation}
+\overrightarrow{s}=(-\cos\alpha_s\sin\gamma_s\ -\cos\alpha_s\cos\gamma_s\ -\sin\alpha_s).
+\label{eq:rushe} %对公式设置标签，后文引用
+\end{equation}
+
+在镜场坐标系下，以第i个定日镜为例，设其中心$M_i$坐标为$(x,y,h)$,设集热器中心$N_i$坐标为$(0,0,H)$，则根据假设(2)，反射光线的单位向量为
+\begin{equation}
+\overrightarrow{r}=\overrightarrow{ON_i}-\overrightarrow{OM_i}=\frac{(-x,-y,H-h)}{\sqrt{x^2+y^2+(H-h)^2} } .
+\label{eq:fanshe} %对公式设置标签，后文引用
+\end{equation}
+
+由于入射角$\theta$范围为$[0,\frac{\pi}{2}]$，根据空间向量的夹角公式\cref{eq:jiajiao},即可计算太阳光的入射角度，取余弦值就得到余弦效率。
+\begin{equation}
+\theta =\frac{1}{2} \cos\left \langle \vec{r},\vec{s}  \right \rangle =\frac{1}{2}\frac{-\vec{r}·\vec{s}}{\left | \vec{r} ·\vec{s}\right | } 
+\label{eq:jiajiao} %对公式设置标签，后文引用
+\end{equation}
+
+结合附件中各个定日镜的位置信息，利用MATLAB可以求得每个镜子的余弦效率，进而求得镜场各观测日及时间点平均余弦效率，平均可得镜场各观测日平均余弦率。具体数据见支撑文件中\textit{问题一余弦效率.xlsx}.
+\begin{longtable}{cc}
+	\caption{镜场各观测日平均余弦率}\label{tab:001}\\
+	\toprule
+	& \ 镜场各观测日平均余弦率\  \\ \midrule
+	1月21日  & 0.7199 \\
+	2月21日  & 0.7404 \\
+	3月21日  & 0.7611 \\
+	4月21日  & 0.7793 \\
+	5月21日  & 0.7893 \\
+	6月21日  & 0.7924 \\
+	7月21日  & 0.7892 \\
+	8月21日  & 0.7786 \\
+	9月21日  & 0.7601 \\
+	10月21日 & 0.7378 \\
+	11月21日 & 0.7182 \\ \bottomrule
+\end{longtable}
+%\end{table}
+
+\subsection{遮挡效率的计算}
+\subsubsection{旋转矩阵}
+
+向量与矩阵的乘积仅改变向量方向，而不改变向量大小。由于定日镜场阴影挡光的计算涉及多个坐标系，因此需要通过旋转矩阵简化计算。在三维空间中，绕$X$轴、$Y$轴、$Z$轴逆时针旋转的旋转矩阵表达式如下：
+\begin{equation}
+\begin{array}{c}
+R_x(\alpha)=\begin{bmatrix}
+1 & 0 & 0\\
+0 & \cos \alpha  & \sin \alpha \\
+0 & \sin \alpha & \cos \alpha 
+\end{bmatrix}
+\end{array},
+\end{equation}
+\begin{equation}
+\begin{array}{c}
+R_y(\beta)=\begin{bmatrix}
+\cos \beta  & 0 & \sin \beta \\
+0 & 1  & 0 \\
+-\sin \beta  & 0 & \cos \beta 
+\end{bmatrix}
+\end{array},
+\end{equation}
+\begin{equation}
+\begin{array}{c}
+R_z(\gamma)=\begin{bmatrix}
+\cos \gamma  & -\sin \gamma &  0\\
+\sin \gamma & \cos \gamma   & 0 \\
+0 & 0 & 1
+\end{bmatrix}
+\end{array}.
+\end{equation}
+
+\subsubsection{定日镜方位角和高度角的计算}
+定日镜主要是通过调节高度角和方位角，保证太阳光能够反射到吸收塔上的集热器。通过建立定日镜的双轴跟踪模型，根据太阳的运动规律和定日镜的反射原理，调整定日镜的高度角和方位角，保证定日镜能够在各个时刻将太阳光线反射至吸热器。\upcite{刘家颖2023塔式太阳能定日镜跟踪控制系统的设计}
+
+设定日镜高度角为$A$，方位角为$B$，如图3，$z$轴指向天顶，$x$轴指向东，$y$轴指向北。
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=.5\textwidth]{zhuizong}
+	\caption{定日镜方位角和高度角示意图}
+\end{figure}
+
+镜面法向量为$\vec{n} $，则有
+\begin{equation}
+\vec{n}=(\sin A\sin B,\sin A\cos B,\cos A), 
+\end{equation}
+
+由太阳的入射光线单位向量$\overrightarrow{s}$，反射光线单位向量$\overrightarrow{r}$，可计算定日镜的法向量$\vec{n} $
+\begin{equation}
+\vec{n} =\frac{-\vec{s}+\vec{r}}{\left \| -\vec{s}+\vec{r} \right \| }
+\label{eq:n}
+\end{equation}
+
+联立公式\cref{eq:n}、公式\cref{eq:rushe}和公式 \cref{eq:fanshe}，计算得到定日镜的高度角$A$和方位$B$角
+\begin{equation}
+\begin{aligned}
+&A=\arccos {\frac{\displaystyle\frac{H-h}{\sqrt{x^2+y^2+(H-h)^2} } +\sin \alpha_S}{\left \|\vec{r} -\vec{s}  \right \| } }\\
+&B=\arctan {\frac{\displaystyle\frac{-x}{\sqrt{x^2+y^2+(H-h)^2}}+\cos \alpha _s\sin \gamma _S }{\displaystyle\frac{-y}{\sqrt{x^2+y^2+(H-h)^2}}+\cos \alpha _s\cos \gamma _S } }
+\end{aligned}
+\end{equation}
+
+\subsubsection{阴影挡光效率模型}
+阴影挡光损失包括塔对镜场造成的阴影损失、后排定日镜接收的太阳光被前方定日镜所阻挡导致的阴影损失、后排定日镜在反射太阳光时被前方定日镜阻挡而未到达吸热器上导致的挡光损失三部分。\upcite{王瑞庭2009太阳能塔式电站镜场对地面的遮阳分析}图4为三种情况均存在的阴影挡光效应模拟。图中a、b代表太阳入射光线，灰色部分为吸收塔投影，黑色部分为入射光受前方定日镜阻挡在后排产生的投影，蓝色部分为b入射光线在入射到定日镜A后的反射光线被A镜阻挡部分。
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=.5\textwidth]{yinying}
+	\caption{阴影挡光效应模拟}
+\end{figure}
+
+计算阴影挡光损失，实际上就是计算B镜的任意一点顺着入射光线或反射光线的相反方向是否会落入A镜区域内，并求出其在A镜的镜面坐标值。 \upcite{张平2021太阳能塔式光热镜场光学效率计算方法}
+
+在B镜坐标系下，B镜中某一点 $H_1 = (x_1,y_1)$ ，求经过光线落入A镜坐标系中的坐标 $H_2 = (x_2,y_2)$ ，即由已知 $H_1$，求$ H_2$，再判断 $H_2$是否在镜面内，如图4。
+设一束光线在镜面坐标系中的向量表示为$\overrightarrow{V}_H$，在地面坐标系中的向量表示为$\overrightarrow{V}_0$。由坐标轴旋转变换的公式可知，
+\begin{equation}
+R_Z(B)·R_x(A)=R,
+\end{equation}
+\begin{equation}
+\vec{V}_0 =R·\vec{V}_H=\begin{bmatrix}
+\cos B  & -\sin B\cos A & \sin A\sin B\\
+\sin B & \cos A\cos B & -\sin A\cos B\\
+0 & \sin A & \cos A
+\end{bmatrix}
+·\vec{V}_H,
+\end{equation}
+
+其中，$A,B$分别表示定日镜的高度角和方位角，如图3所示。$O_A$ 为 A 镜坐标系原点在地面坐标系的坐标值，表示为$(x_A,y_A,z_A)$，$O_B$ 为 B 镜坐标系原点在地面坐标系的坐标值，表示为$(x_B,y_B,z_B)$。计算$H_2 = ( x_2,y_2,0)$的步骤如下\upcite{张平2021太阳能塔式光热镜场光学效率计算方法}: 
+\begin{itemize}
+	\item [(1)] 
+	将B镜的某一点$H_1$转换到地面坐标系下的${H_1}'$ 。
+	\begin{equation}
+	{H_1}'=R·H_1+O_B=\begin{pmatrix}
+	{x_1}'\\
+	{y_1}'\\
+	{z_1}'
+	\end{pmatrix}
+	\end{equation}
+	
+	\item [(2)]
+	将地面坐标系下的${H_1}'$转换到A镜坐标系下的${H_1}''$。
+	\begin{equation}
+	{H_1}'' =R^{T} ({H_1}'-O_A)=\begin{pmatrix}
+	{x_1}''\\
+	{y_1}''\\
+	{z_1}''
+	\end{pmatrix}
+	\end{equation}
+	
+	\item [(3)]
+	将地面坐标系下的光线(入射或反射) 转换到A镜坐标系下。将光线在地面坐标系下的向量$\vec{V}_0$转换到B镜坐标系下，表
+	示为$\vec{V}_H$
+	\begin{equation}
+	\vec{V}_H =R^{T} ·\vec{V}_0=(a,b,c)
+	\end{equation}
+	
+	\item [(4)]
+	在A镜坐标系下，计算光线与A镜交点$H_2=(x_2,y_2,0)$。
+	\begin{equation}
+	\frac{x_2-{x_1}''}{a} =\frac{y_2-{y_1}''}{b} =\frac{z_2-{z_1}''}{c} 
+	\end{equation}
+	
+	\begin{equation}
+	\text{解得}
+	\begin{cases}
+	x_2=\displaystyle\frac{c{x_1}''-a{z_1}''}{c} &\\
+	y_2=\displaystyle\frac{c{y_1}''-b{z_1}''}{c} &
+	\end{cases}
+	\end{equation}
+	
+	\item [(5)]
+	判断 H2是否在镜内。
+   \end{itemize}
+
+\subsubsection{阴影损失率计算}
+假设整面镜子均能接受到入射光，可以用上述模型计算出其挡光损失，记为m。考虑到仅有成功入射到定日镜上的光线才能够产生反射光，因此，在计算镜子的挡光损失时，我们用(1-阴影挡光率)×m来代表镜子最终的挡光损失。
+
+镜场阴影挡光效率中，不仅是定日镜之间会互相影响产生阴影和挡光，还有吸收塔的阴影对镜场的影响。\upcite{郭苏2007考虑接收塔阴影的定日镜有效利用率计算}只需根据太阳光线的方向判定塔影所在的镜场区域，而后计算该区域的定日镜受塔影的影响即可。
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=.5\textwidth]{A1}
+	\caption{1月21日15:00塔影示意图}
+\end{figure}
+
+将数据导入MATLAB进行计算，求得单面镜子各观测日平均阴影损失率，平均算得镜场各观测日及时间点平均阴影损失率，具体数据见支撑材料\textit{问题一阴影损失率.xlsx}求得题目所需镜场各观测日平均阴影损失率，1-阴影损失率即得到阴影遮挡效率，如表所示。
+\begin{longtable}{ccc}
+	\caption{镜场各观测日平均阴影遮挡效率}\label{tab:001}\\
+	\toprule
+	& 各观测日平均阴影损失率 & \multicolumn{1}{l}{各观测日平均阴影遮挡效率} \\ \midrule
+	1月21日  & 0.0651   & 0.9349                      \\
+	2月21日  & 0.0513   & 0.9487                        \\
+	3月21日  & 0.0467   & 0.9533                        \\
+	4月21日  & 0.0458   & 0.9542                        \\
+	5月21日  & 0.0456   & 0.9544                       \\
+	6月21日  & 0.0458   & 0.9542                        \\
+	7月21日  & 0.0456   & 0.9544                       \\
+	8月21日  & 0.0457   & 0.9543                        \\
+	9月21日  & 0.0468   & 0.9532                        \\
+	10月21日 & 0.0522   & 0.9478                         \\
+	11月21日 & 0.0664   & 0.9336                        \\
+	12月21日 & 0.0773   & 0.9227                           \\ \bottomrule
+\end{longtable}
+
+	\subsection{截断效率的计算}
+	集热器截断效率是指投射到吸热器表面的太阳辐射能与定日镜反射的总太阳辐射能之比。来自太阳的入射光线是一束锥形光线，其半角展宽为4.65 mrad，如图6，具有发散性，因此反射到吸热器上的光线也是呈发散的锥形形状。当镜场反射的光斑落入吸热器接受面时，可能产生光斑的偏移或溢出，导致有部分光照射在吸热器之外，这部分溢出光斑就形成了截断损失。\upcite{杜宇航2020塔式光热电站定日镜不同聚焦策略的影响分析}
+	\begin{figure}[!htbp]
+		\centering
+		\includegraphics[width=.5\textwidth]{zhangjiao}
+		\caption{太阳张角示意图}
+	\end{figure}
+	
+	采用光线追迹法，在太阳半角展宽方向以均匀角度进行步长的划分，选取若干光线作为入射光线，均匀追迹其在经过定日镜反射后落入吸热器的位置。一束光锥的半角展宽是 4.65 mrad，追迹的方式是，在周向方向上，也同样以均匀角度进行步长的划分，如图7。其中$a$光线无法照射到集热器，即为为光斑溢出部分。
+	\begin{figure}[!htbp]
+		\centering
+		\includegraphics[width=.5\textwidth]{guangji}
+		\caption{光迹追踪示意图}
+	\end{figure}
+
+	首先建立一个光锥坐标系，如图7所示，在一锥形光束中，$Z_S$沿着主光线方向，并朝向太阳圆盘中心。$X_S$轴始终与地面平行，$Y_S$轴垂直于$X_S$和$Z_S$轴。
+	假设任一光线在光锥中与来自太阳中心的主光线的夹角为$\theta$，与$X_S$的夹角为 $\tau$，则任一光线的表达式为:
+	\begin{equation}
+	S=(\sin \theta\cos \tau,\sin \theta\sin \tau,\cos \theta)
+	\end{equation}
+	
+	一束光锥是由无数根光线组成，计算截断效率或者计算吸热器上的能流密度，即是累积计算许多光线在经过定日镜的反射后到达吸热器上时的落点坐标。
+	\begin{itemize}
+		\item [(1)] 
+		求光锥中任一光线在地面坐标系中的向量表示。
+		\item [(2)]
+		求地面坐标系下反射光线的向量$\vec{V}_{sl}$与镜面法线向量$\vec{V}_n$都是单位向量，两个向量的夹角假设为$\theta$，其余弦值
+		\begin{equation}
+		\cos \theta=\frac{\vec{V}_{sl}·\vec{V}_n}{\left | \vec{V}_{sl} \right | \left | \vec{V}_n \right | } =\vec{V}_{sl} · \vec{V}_n 
+		\end{equation}
+		
+		\begin{equation}
+		\vec{V}_{r}=2\cos\theta\vec{V}_{r}-\vec{V}_{sl}=(m,n,l)
+		\end{equation}
+		
+		\item [(3)]
+		求镜面坐标系上$ H_1 $点在地面坐标系的坐标表示: A 镜的某一点$ H_1$ 转换到地面坐标系下的坐标，并表示为${H_1}'={({x_1}',{y_1}',{z_1}')}^T$
+		\item [(4)]
+		求解反射光线与集热器表面的交点坐标。反射光线的方程为：
+		\begin{equation}
+		\frac{x-{x_1}'}{m}=\frac{y-{y_1}'}{n}=\frac{z-{z_1}'}{l}.
+		\label{eq:f1}
+		\end{equation}
+		集热器受热面方程:
+		\begin{equation}
+		\begin{cases}
+		x^2+y^2=R^2\\
+		z\in [-\frac{h}{2} ,\frac{h}{2}] &
+		\end{cases}
+		\label{eq:shoure},
+		\end{equation}
+		联立公式\cref{eq:f1}和公式\cref{eq:shoure}，解得求解吸热器上光线的入
+		射坐标，从而判断光线是否能够射到集热器上。
+		计算所得阶段数据见支撑文件\textit{问题一截断效率}。
+	\end{itemize}   
+		
+		\subsection{大气透射率的计算}
+		由于空气中的粉尘颗粒对光线有折射、散射等作用，由定日镜到吸热器的光路径中会产生一定损失，即为大气衰减损失。因此需要计算各个定日镜至吸热器的距离，从而获得大气透射率。		
+		\begin{equation}
+		\eta _{at}=0.99321-0.0001176d_{HR}+1.97\times 10^{-8}\times d_{HR}^{2} \ (d_{HR}\le 1000),
+		\end{equation}
+		
+		结合附件中的定日镜坐标，求得结果见支撑材料\textit{问题一大气透射率.xlsx}。
+		
+		\subsection{光学效率和输出热功率的计算}
+		根据题目所给光学效率计算公式\cref{eq:gxxiaolv}，取镜面反射率 $\eta_{ref}$=0.92，求得每面定日镜的光学效率，具体数据见支撑材料\textit{问题一单面镜子各观测日平均光学效率.xlsx}。
+		\begin{equation}
+		\eta =\eta_{sb}\eta_{cos}\eta_{at}\eta_{trunc}\eta_{ref},
+		\label{eq:gxxiaolv}
+		\end{equation}
+		
+		前面已经求出各个镜子的光学效率$\eta_i$，已知定日镜尺寸均为 6 m×6 m，只需计算镜面的法向直接辐射辐照度DNI（单位：kW/m2）即可。DNI是指地球上垂直于太阳光线的平面单位面积上、单位时间内接收到的太阳辐射能量，题目已提供了相关计算公式\cref{eq:DNI}，其中$G_0$ 为太阳常数，其值取为 1.366 $kW/m^2$，$H_0$为海拔高度 (单位：km)。联立公式\cref{eq:taiyang}算得DNI值。
+		\begin{equation}
+		\begin{aligned}		
+		&DNI = G_0 [a + b \ exp (−\frac{c}{\sin \alpha_S})],\\
+		&a=0.4237-0.00821(6-H_0)^2,\\
+		&b=0.5055+0.00595(6.5-H_0)^2,\\
+		&c=0.2711+0.01858(2.5-H_0)^2,
+		\end{aligned}
+		\label{eq:DNI}
+		\end{equation}
+		
+		题目也已给出计算定日镜场的输出热功率$E_{field}$的公式，与公式\cref{eq:gxxiaolv}联立，除以总面积，求得每月21日年单位面积镜面年平均输出热功率 $(kW/m^2)$。
+		\begin{equation}
+		E_{field}=DNI·\sum_{1}^{N}A_i\eta_i,
+		\end{equation}		
+		
+		得到的每月21日平均光学效率及输出功率已以题目中表1的形式填入，见附件B。同时可求得问题一年平均光学效率及输出功率，如表4。
+		\begin{table}[!htbp]
+			\centering
+			\caption{问题一年平均光学效率及输出功率}\centering
+			\begin{tabular}{cccccc}
+				\hline
+				\begin{tabular}[c]{@{}c@{}}年平均光学\\ 效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}年平均余弦\\ 效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}年平均阴影\\ 遮挡效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}年平均截断\\ 效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}年平均输出\\ 热功率(MW)\end{tabular} & \begin{tabular}[c]{@{}c@{}}单位面积镜面年平均\\ 输出热功率(kW/m)\end{tabular} \\ \hline
+				0.5814                                             & 0.7565                                             & 0.9434                                               & 0.9104                                             & 31.2720                                                 & 0.4978                                                          \\ \hline
+			\end{tabular}
+		\end{table}
+	
+\section{问题二、三模型的建立与求解}
+        \subsection{定日镜场布局模型的建立}
+        聚光镜场设计是整个塔式太阳能热发电系统的重要环节。最初美国休斯顿大学的Lipps和Vanthull提出了放射状栅格法分格的聚光镜排列方式。我们参考了这种排列方式，将定日镜安装在以吸收塔为原点的同心圆弧上，在定日镜场在达到额定功率的条件下，欲使单位镜面面积年平均输出热功率尽量大，即让定日镜的平均光学效率尽量大。由问题1的计算结果可知，截断效率对光学效率的影响较小，而余弦效率对光学效率的影响程度很大，因此，在模型建立过程中，我们仅用主要余弦效率来衡量定日镜场各项指标的确定，其余的影响因素均以问题一的计算结果来代替。
+        
+        在计算过程中，我们采用了贪心算法，即分别考虑定日镜场各项指标与平均余弦效率的关系，从而确定出最优解。
+        
+        假设定日镜场年平均输出热功率为$P$，镜面边长$q$，镜面宽度$t$，镜面高度$k$，安装高度$h$，定日镜到吸收塔距离$d_1$，相邻定日镜距离$d_2$。根据题目要求，我们可以建立如下目标规划模型：
+        \begin{equation}
+        \text{目标函数}
+        maxP
+        \end{equation}
+        
+		\begin{equation}
+		\text{约束条件}
+		\begin{cases}
+		P\ge60kW &\\
+		t\ge k &\\
+		2m\le q\le 8m&\\
+		2m\le h\le 6m&\\
+		d_1\ge 100m&\\
+		d_2\ge 5m+t&
+		\end{cases}
+		\end{equation}
+		
+		\subsection{问题二的求解}
+		\subsubsection{确定定日镜与吸收塔的相对位置关系}
+			(1)确定定日镜前后间距
+			
+			假设镜场中只有一列位于接收塔正北向的定日镜，仅考虑定日镜之间的相互影响。改变定日镜的前后间距$d_y$，计算得到$d_y=11.6667m$时镜场平均余弦效率取最大值。
+			
+			(2)确定定日镜左右间距
+			
+			假设镜场中只有一排相对于接收塔正北向对称的定日镜，仅考虑定日镜之的相互影响。改变定日镜的左右间距$d_x$，计算得到$d_x=11m$何时镜场平均余弦效率取最大值。
+			
+		\subsubsection{确定吸收塔的位置以及定日镜的数目和位置}
+			
+			在确定了定日镜与吸收塔的相对位置关系后，改变吸收塔的位置，由计算可知，吸收塔的坐标位于(0,-225,0)时镜场平均余弦效率取最大值，从而可以求得定日镜的数目和位置。
+			
+		\subsubsection{定日镜安装高度和尺寸的确定}
+			
+			分别改变定日镜的安装高度和尺寸，由计算可知，当定日镜的安装高度$h$为4m时，高度和宽度均为6m时，镜场的平均余弦效率取最大值。
+			
+			经MATLAB计算，求得定日镜布局方式见支撑材料\textit{result2}，求得设计参数表如表5，每月21日平均光学效率及输出功率、年平均光学效率及输出功率见表6、表7。
+			\begin{table}[!htbp]
+				\centering
+				\caption{设计参数}\centering
+				\begin{tabular}{ccccc}
+					\hline
+					吸收塔位置坐标  & \begin{tabular}[c]{@{}c@{}}定日镜尺寸\\ （宽 × 高）\end{tabular} & \begin{tabular}[c]{@{}c@{}}定日镜安装高度\\ (m)\end{tabular} & 定日镜总面数 & \begin{tabular}[c]{@{}c@{}}定日镜总面积\\ $(m^2)$\end{tabular} \\ \hline
+					（0，-225） & 6*6                                                     & 4                                                     & 2632   & 94752                                                 \\ \hline
+				\end{tabular}
+			\end{table}
+		
+			\begin{table}[!htbp]
+				\centering
+				\caption{每月21日平均光学效率及输出功率}\centering
+				\begin{tabular}{cccccc}
+					\hline
+					日期     & \begin{tabular}[c]{@{}c@{}}平均光学\\ 效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}平均余弦\\ 效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}平均阴影\\ 遮挡效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}平均截断\\ 效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}单位面积镜面平均\\ 输出热功率$(kW/m^2)$\end{tabular} \\ \hline
+					1月21日  & 0.6609                                            & 0.8892                                            & 0.9253                                              & 0.9124                                            & 0.5742                                                          \\
+					2月21日  & 0.6662                                            & 0.8819                                            & 0.9442                                              & 0.9088                                            & 0.6274                                                          \\
+					3月21日  & 0.6612                                            & 0.8681                                            & 0.9521                                              & 0.9087                                            & 0.6572                                                          \\
+					4月21日  & 0.6468                                            & 0.8464                                            & 0.9542                                              & 0.9097                                            & 0.6653                                                          \\
+					5月21日  & 0.6325                                            & 0.8264                                            & 0.9544                                              & 0.9110                                            & 0.6606                                                          \\
+					6月21日  & 0.6258                                            & 0.8179                                            & 0.9542                                              & 0.9108                                            & 0.6564                                                          \\
+					7月21日  & 0.6328                                            & 0.8267                                            & 0.9544                                              & 0.9111                                            & 0.6608                                                          \\
+					8月21日  & 0.6474                                            & 0.8475                                            & 0.9543                                              & 0.9093                                            & 0.6652                                                          \\
+					9月21日  & 0.6616                                            & 0.8690                                            & 0.9516                                              & 0.9088                                            & 0.6561                                                          \\
+					10月21日 & 0.6668                                            & 0.8831                                            & 0.9429                                              & 0.9095                                            & 0.6227                                                          \\
+					11月21日 & 0.6615                                            & 0.8895                                            & 0.9258                                              & 0.9125                                            & 0.5698                                                          \\
+					12月21日 & 0.6494                                            & 0.8908                                            & 0.9075                                              & 0.9125                                            & 0.5376                                                          \\ \hline
+				\end{tabular}
+			\end{table}
+				
+			\begin{table}[!htbp]
+				\centering
+				\caption{年平均光学效率及输出功率}\centering
+				\begin{tabular}{cccccc}
+					\hline
+					\begin{tabular}[c]{@{}c@{}}年平均光\\ 学效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}年平均余\\ 弦效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}年平均阴\\ 影遮挡效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}年平均截断\\ 效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}年平均输出\\ 热功率(MW)\end{tabular} & \begin{tabular}[c]{@{}c@{}}单位面积镜面年平均\\ 输出热功率$(kW/m^2)$\end{tabular} \\ \hline
+					0.6513                                             & 0.8614                                             & 0.9434                                               & 0.9104                                             & 59.7233                                                 & 0.6303                                                           \\ \hline
+				\end{tabular}
+			\end{table}
+			
+		\subsection{问题三的求解}
+		问题三建立于问题二的基础上。考虑到定日镜场的对称性，相邻镜子大小不一、高低不齐容易造成阴影挡光损失，降低光学效率，因此假定位于同圈的定日镜尺寸、安装高度相同。在问题二结果的基础上，分别改变不同圈层定日镜的尺寸和安装高度，经MATLAB计算。求得镜场平均余弦效率最大时，定日镜布局方式，见支撑文件\textit{result3}，求得设计参数见表8，求得每月21日平均光学效率及输出功率、年平均光学效率及输出功率见表9,、表10。
+		\begin{table}[!htbp]
+			\centering
+			\caption{设计参数}\centering
+			\begin{tabular}{ccccc}
+				\hline
+				吸收塔位置坐标  & \begin{tabular}[c]{@{}c@{}}定日镜尺寸\\ （宽 × 高）\end{tabular} & \begin{tabular}[c]{@{}c@{}}定日镜安装高度\\ (m)\end{tabular} & 定日镜总面数 & \begin{tabular}[c]{@{}c@{}}定日镜总面积\\ $(m^2)$\end{tabular} \\ \hline
+				（0，-225） &                                                         &                                                       & 2632   & 172068.519                                                \\ \hline
+			\end{tabular}
+		\end{table}
+	
+	\begin{table}[!htbp]
+		\centering
+		\caption{每月21日平均光学效率及输出功率}
+		\begin{tabular}{cccccc}
+			\hline
+			日期     & \begin{tabular}[c]{@{}c@{}}平均光学\\ 效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}平均余弦\\ 效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}平均阴影遮\\ 挡效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}平均截断\\ 效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}单位面积镜面平均\\ 输出热功率$(kW/m^2)$\end{tabular} \\ \hline
+			1月21日  & 0.6610                                            & 0.8895                                            & 0.9253                                              & 0.9124                                            & 0.5744                                                          \\
+			2月21日  & 0.6663                                            & 0.8821                                            & 0.9442                                              & 0.9088                                            & 0.6276                                                          \\
+			3月21日  & 0.6612                                            & 0.8682                                            & 0.9521                                              & 0.9087                                            & 0.6573                                                          \\
+			4月21日  & 0.6467                                            & 0.8464                                            & 0.9542                                              & 0.9097                                            & 0.6652                                                          \\
+			5月21日  & 0.6324                                            & 0.8264                                            & 0.9544                                              & 0.9110                                            & 0.6605                                                          \\
+			6月21日  & 0.6256                                            & 0.8178                                            & 0.9542                                              & 0.9108                                            & 0.6562                                                          \\
+			7月21日  & 0.6327                                            & 0.8266                                            & 0.9544                                              & 0.9111                                            & 0.6607                                                          \\
+			8月21日  & 0.6474                                            & 0.8475                                            & 0.9543                                              & 0.9093                                            & 0.6651                                                          \\
+			9月21日  & 0.6616                                            & 0.8691                                            & 0.9516                                              & 0.9088                                            & 0.6562                                                          \\
+			10月21日 & 0.6669                                            & 0.8834                                            & 0.9429                                              & 0.9095                                            & 0.6228                                                          \\
+			11月21日 & 0.6617                                            & 0.8899                                            & 0.9258                                              & 0.9125                                            & 0.5700                                                          \\
+			12月21日 & 0.6496                                            & 0.8912                                            & 0.9075                                              & 0.9125                                            & 0.5377                                                          \\ \hline
+		\end{tabular}
+	\end{table}
+		\begin{table}[!htbp]
+			\centering
+			\caption{年平均光学效率及输出功率}\centering
+			\begin{tabular}{cccccc}
+				\hline
+				\begin{tabular}[c]{@{}c@{}}年平均光学\\ 效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}年平均余弦\\ 效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}年平均阴影\\ 遮挡效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}年平均截断\\ 效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}年平均输出\\ 热功率(MW)\end{tabular} & \begin{tabular}[c]{@{}c@{}}单位面积镜面年平均\\ 输出热功率$(kW/m^2)$\end{tabular} \\ \hline
+				0.651110768                                        & 0.861513939                                        & 0.943405995                                          & 0.910443773                                        & 59.70500662                                             & 0.630118695                                                         \\ \hline
+			\end{tabular}
+		\end{table}
+		
+		\section{模型的检验}
+		塔式太阳能发电系统作为当前及其具有前景的发电装置，已有许多学者针对定日镜场的布局开展研究。
+		
+		邓立宝在研究北纬38°塔式太阳能定日镜场时计算的光学效率数据如图8所示。数据与本文中计算的光学效率相符。
+		房淼森在研究北纬30°的偏心镜场时建立的仿真模型，得到优化后的镜场排布如图9所示。本文通过贪心算法得到的镜场排布如图10所示。可以看出二者形状已极为接近。
+		\begin{figure}[!htbp]
+			\centering
+			\includegraphics[width=.5\textwidth]{x1}
+			\caption{邓立宝求得光学效率}
+		\end{figure}
+		
+		\begin{figure}
+			\centering
+			\begin{minipage}[c]{0.3\textwidth}
+				\centering
+				\includegraphics[width=0.95\textwidth]{z1}
+				\subcaption{房淼森镜场排布}
+			\end{minipage}
+			\begin{minipage}[c]{0.3\textwidth}
+				\centering
+				\includegraphics[width=0.95\textwidth]{untitled3 (1)}
+				\vspace{0.4cm}
+				\subcaption{本文镜场排布}
+				\label{fig:sample-figure-b}
+			\end{minipage}
+			\caption{优化镜场排布示意图}
+			\label{fig:sample-figure}
+		\end{figure}
+	    根据与查阅文献所做的对比，可以看出本文缩减模型结果较为精确。
+	  
+		
+		\section{模型评价与改进}		
+		\subsection{模型的优点}
+		\begin{itemize}
+			\item [(1)] 
+			本文综合考虑了多方面的因素。较为详细地推导了定日镜场的几何模型，采用光线追迹法，可以对光线的路径进行准确计算，结果较为精确。			
+			\item [(2)]
+			定日镜场布局模型的贪心算法所得结果显著提高了平均光学效率，对实际问题的解决有较大帮助，具有较高的应用价值。
+		\end{itemize} 
+		
+		\subsection{模型的不足}
+		\begin{itemize}
+			\item [(1)] 
+			由于时间紧迫，我们选用的贪心算法仅为近似最优解，模型仍然有改进的空间。
+			\item [(2)]
+			阴影挡光效率模型未计算阴影损失与挡光损失重合的部分，存在一定误差。
+		\end{itemize} 
+		
+		\subsection{模型的推广和改进}
+		\begin{itemize}
+			\item [(1)] 
+			可以将该模型应用到实际定日镜场的布局过程中，提高经济效益。
+			\item [(2)]
+			考虑采用混合遗传算法对定日镜场布局模型进行改进，希望获得最优解，进一步提高光学效率。
+		\end{itemize} 
+
+
+%参考文献
+%\begin{thebibliography}{9}%宽度9
+\bibliographystyle{unsrt}
+\bibliography{refer.bib}
+%\end{thebibliography}
+ 
+ \newpage
+ \begin{appendices}
+ 	\section{支撑材料列表}
+ 	\begin{table}[!htbp]
+ 		\centering\
+ 		\begin{tabular}{|c|c|c|}
+ 			\hline
+ 			序号 & 文件名                                                                    & 材料说明                                                           \\ \hline
+ 			1  & A.m                                                                    & 问题一主函数                                                         \\ \hline
+ 			2  & cal\_lighteff.m                                                        & 问题二优化函数                                                        \\ \hline
+ 			3  & cal\_lighteff\_2.m                                                     & 问题二优化函数                                                        \\ \hline
+ 			4  & calshadow\_2.m                                                         & 定日镜阴影率计算                                                       \\ \hline
+ 			5  & A\_2.m                                                                 & 问题二、三主函数                                                       \\ \hline
+ 			6  & result2.xlsx                                                           & 问题二优化坐标                                                        \\ \hline
+ 			7  & result3.xlsx                                                           & 问题三优化坐标                                                        \\ \hline
+ 			8  & \begin{tabular}[c]{@{}c@{}}表1：问题一每月21日平均光学效率\\ 及输出功率.xlsx\end{tabular} & \begin{tabular}[c]{@{}c@{}}问题一每月21日平均光学效率\\ 及输出功率\end{tabular} \\ \hline
+ 			9  & \begin{tabular}[c]{@{}c@{}}表1：问题二每月21日平均光学效率\\ 及输出功率.xlsx\end{tabular} & \begin{tabular}[c]{@{}c@{}}问题二每月21日平均光学效率\\ 及输出功率\end{tabular} \\ \hline
+ 			10 & \begin{tabular}[c]{@{}c@{}}表1：问题三每月21日平均光学效率\\ 及输出功率.xlsx\end{tabular} & \begin{tabular}[c]{@{}c@{}}问题三每月21日平均光学效率\\ 及输出功率\end{tabular} \\ \hline
+ 			11 & \begin{tabular}[c]{@{}c@{}}表2：问题一年平均光学效率\\ 及输出功率.xlsx\end{tabular}     & \begin{tabular}[c]{@{}c@{}}问题一年平均光学效率\\ 及输出功率\end{tabular}     \\ \hline
+ 			12 & \begin{tabular}[c]{@{}c@{}}表2：问题二年平均光学效率\\ 及输出功率.xlsx\end{tabular}     & \begin{tabular}[c]{@{}c@{}}问题二年平均光学效率\\ 及输出功率\end{tabular}     \\ \hline
+ 			13 & \begin{tabular}[c]{@{}c@{}}表2：问题三年平均光学效率\\ 及输出功率.xlsx\end{tabular}     & \begin{tabular}[c]{@{}c@{}}问题三年平均光学效率\\ 及输出功率\end{tabular}     \\ \hline
+ 			14 & 问题一余弦效率.xlsx                                                           & 问题一余弦效率                                                        \\ \hline
+ 			15 & 问题一阴影损失率.xlsx                                                          & 问题一阴影损失率                                                       \\ \hline
+ 			16 & 问题一截断效率.xlsx                                                           & 问题一截断效率                                                        \\ \hline
+ 			17 & \begin{tabular}[c]{@{}c@{}}问题一单面镜子各观测日平均\\ 光学效率.xlsx\end{tabular}      & \begin{tabular}[c]{@{}c@{}}问题一单面镜子各观测日平均\\ 光学效率\end{tabular}   \\ \hline
+ 			18 & 问题一大气透射率.xlsx                                                          & 问题一大气透射率                                                       \\ \hline
+ 			19 & 问题三设计参数表.xlsx                                                          & 问题三设计参数表                                                       \\ \hline
+ 			20 & 问题二设计参数表.xlsx                                                          & 问题二设计参数表                                                       \\ \hline
+ 		\end{tabular}
+ 	\end{table}
+ 	
+ 	\newpage
+ 	\section{问题一每月21日平均光学效率及输出功率}
+ 	\begin{table}[!htbp]
+ 		\centering
+ 		\begin{tabular}{cccccc}
+ 			\hline
+ 			日期     & \begin{tabular}[c]{@{}c@{}}平均光学\\ 效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}平均余弦\\ 效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}平均阴影\\ 遮挡效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}平均截断\\ 效率\end{tabular} & \begin{tabular}[c]{@{}c@{}}单位面积镜面平均\\ 输出热功率$(kW/m^2)$\end{tabular} \\ \hline
+ 			1月21日  & 0.5469                                            & 0.7199                                            & 0.9253                                              & 0.9124                                            & 0.4469                                                         \\
+ 			2月21日  & 0.5693                                            & 0.7404                                            & 0.9442                                              & 0.9088                                            & 0.4844                                                         \\
+ 			3月21日  & 0.5886                                            & 0.7611                                            & 0.9521                                              & 0.9087                                            & 0.5113                                                         \\
+ 			4月21日  & 0.6031                                            & 0.7793                                            & 0.9542                                              & 0.9097                                            & 0.5291                                                         \\
+ 			5月21日  & 0.6108                                            & 0.7893                                            & 0.9544                                              & 0.9110                                            & 0.5372                                                         \\
+ 			6月21日  & 0.6127                                            & 0.7924                                            & 0.9542                                              & 0.9108                                            & 0.5395                                                         \\
+ 			7月21日  & 0.6108                                            & 0.7892                                            & 0.9544                                              & 0.9111                                            & 0.5372                                                         \\
+ 			8月21日  & 0.6025                                            & 0.7786                                            & 0.9543                                              & 0.9093                                            & 0.5285                                                         \\
+ 			9月21日  & 0.5875                                            & 0.7601                                            & 0.9516                                              & 0.9088                                            & 0.5101                                                         \\
+ 			10月21日 & 0.5671                                            & 0.7378                                            & 0.9429                                              & 0.9095                                            & 0.4804                                                         \\
+ 			11月21日 & 0.5465                                            & 0.7182                                            & 0.9258                                              & 0.9125                                            & 0.4431                                                         \\
+ 			12月21日 & 0.5312                                            & 0.7111                                            & 0.9075                                              & 0.9125                                            & 0.4258                                                         \\ \hline
+ 		\end{tabular}
+ 	\end{table}
+ 	
+ 	\section{问题一主程序——matlab 源程序}
+ 	\begin{lstlisting}[language=matlab]
+ 	clc,clear;
+ 	
+ 	% 导入MAT文件
+ 	loadedData = load('A_1.mat');
+ 	% 获取MAT文件中的所有变量名
+ 	variableNames = fieldnames(loadedData);
+ 	% 逐个将变量名以原名称导入MATLAB脚本中
+ 	for i = 1:numel(variableNames)
+ 	variableName = variableNames{i};
+ 	eval([variableName ' = loadedData.' variableName ';']);
+ 	end
+ 	
+ 	D = [-59,-28,0,31,61,92,122,153,184,214,245,275]; % 各观测日 D值
+ 	ST = [9,10.5,12,13.5,15]; % 各观测时间 ST值
+ 	
+ 	sinS = sin( (2*pi/365).*D ).*sin(2*pi*23.45/360); % sin(太阳赤纬角)
+ 	S = asin(sinS); % 太阳赤纬角
+ 	W = (pi/12).*(ST-12); % 太阳时角
+ 	q = 39.4; % 纬度(度数)
+ 	sinas = cosd(q).*cos(S')*cos(W) + sin(S').* ones(12,5) .*sind(q);
+ 	as = asin(sinas); % 太阳高度角（行为日期，列为时间）
+ 	cosas = cos(as);
+ 	cosys = ( sinS'.* ones(12,5) - sinas .* sind(q))./(cos(as).*cosd(q));
+ 	cosys = round(cosys,6); % 防止出现虚数
+ 	ys = acos(cosys); % 太阳方位角
+ 	ys = [ys(1:end,1:2),2*pi-ys(1:end,3:5)]; % 进行一些处理，使角度在（0，2*pi）
+ 	%ys_deg = (ys./pi)*180;
+ 	sinys = sin(ys);
+ 	
+ 	% 太阳入射光(地面坐标系 x:东 y:北)[外射方向]
+ 	vectorSg_x = sinys.*cosas;
+ 	vectorSg_y = cosys.*cosas;
+ 	vectorSg_z = sinas;
+ 	
+ 	mp = [q1_data ,4*ones(1745,1)]; % 各镜子的位置
+ 	% 镜子中心与集热器中心距离
+ 	mirror_dist = sqrt(mp(1:end,1).^2 + mp(1:end,2).^2 + (80-mp(1:end,3)).^2);
+ 	% 计算各镜子间相对距离
+ 	relative_dist = zeros(1745,1745);
+ 	for i=1:1745
+ 	for j=1:1745
+ 	relative_dist(i,j) = sqrt(( mp(i,1)-mp(j,1) )^2 + (mp(i,2)-mp(j,2))^2 + (mp(i,3)-mp(j,3))^2);
+ 	end
+ 	end
+ 	
+ 	% 获取各镜子的邻居(至多8个邻居，-1表示空)
+ 	should_cal = -1.*ones(1745,8);
+ 	index = 1;
+ 	for i=1:1745
+ 	for j=1:1745
+ 	if relative_dist(i,j) <= 18 && i~=j && index <= 8
+ 	should_cal(i,index) = j;
+ 	index = index + 1;
+ 	end
+ 	end
+ 	index = 1;
+ 	end
+ 	
+ 	% 计算各镜子对邻居的阴影率，求得各观测日平均阴影(使用方法二)
+ 	shadow_rate = zeros(12,5);
+ 	for k = 1:1745
+ 	index = 1;
+ 	while should_cal(k,index) ~= -1
+ 	for i=1:12
+ 	for j = 1:5
+ 	shadow_rate(i,j) = shadow_rate(i,j) + calshadow_2(i,j,k,should_cal(k,index),vectorSg_x, vectorSg_y, vectorSg_z,mp,mirror_dist,as,ys,cosas,sinas,cosys,sinys);        
+ 	end
+ 	end
+ 	index = index + 1;
+ 	end
+ 	end
+ 	shadow_rate = shadow_rate./1745; % （日，时间）平均阴影
+ 	
+ 	% 计算塔的阴影率造成的阴影率并加上
+ 	tower_shadow_len = 84./tan(as);
+ 	tower_shadow_seta = 1.5*pi - ys;
+ 	center_rou = (tower_shadow_len - 100)/2 + 100; % 有效塔影部分的中心离原点的距离
+ 	center_rou(center_rou<100) = 0;
+ 	cover_rate = zeros(12,5); % （日，时间）塔阴影覆盖率
+ 	for i=1:12
+ 	for j=1:5
+ 	center_x = center_rou(i,j)*cos(tower_shadow_seta(i,j));
+ 	center_y = center_rou(i,j)*sin(tower_shadow_seta(i,j));
+ 	cover_count = 0;
+ 	for k=1:1745
+ 	dist=sqrt( (mp(k,1)-center_x)^2 + (mp(k,2)-center_y)^2 );
+ 	temp_seta1 = acos( ([mp(k,1),mp(k,2)]*[center_x,center_y]')/( norm([mp(k,1),mp(k,2)]) * norm([center_x,center_y]) ) );
+ 	temp_seta2 = acos( ([-mp(k,1),-mp(k,2)]*[center_x-mp(k,1),center_y-mp(k,2)]')/( norm([mp(k,1),mp(k,2)]) * norm([center_x-mp(k,1),center_y-mp(k,2)]) ) );
+ 	temp_seta = temp_seta1+temp_seta2;
+ 	x_dist = abs(dist*sin(temp_seta));y_dist = abs(dist*cos(temp_seta));
+ 	if x_dist < 3.5 && y_dist < (center_rou(i,j)-100)
+ 	cover_count = cover_count+1;
+ 	end
+ 	end
+ 	cover_rate(i,j) = cover_count/1745*(1-shadow_rate(i,j));
+ 	end
+ 	end
+ 	shadow_rate = shadow_rate+cover_rate;
+ 	shadow_avg_rate = sum(shadow_rate, 2)./5;% 日 平均阴影
+ 	
+ 	% 算余弦效率
+ 	cos_eff = zeros(12,5);
+ 	for i=1:12
+ 	for j=1:5
+ 	for k=1:1745
+ 	R = mp(k,1:end);
+ 	r = [-R(1)/mirror_dist(k), -R(2)/mirror_dist(k), 76/mirror_dist(k)];
+ 	s = [vectorSg_x(i,j), vectorSg_y(i,j), vectorSg_z(i,j)];
+ 	cosB = (r*s')/(norm(r)*norm(s));
+ 	in_seta = acos(cosB)/2; % 入射角
+ 	cos_eff(i,j) = cos_eff(i,j) + cos(in_seta);
+ 	end
+ 	end
+ 	end
+ 	cos_eff = cos_eff./1745;
+ 	cos_eff_avg = sum(cos_eff, 2)./5;% 日 平均余弦效率
+ 	
+ 	% 算单面镜子的阴影率
+ 	single_shadow_rate = zeros(1745,12);
+ 	for k = 1:1745
+ 	for i=1:12
+ 	index = 1;
+ 	while should_cal(k,index) ~= -1
+ 	neib_ofk = should_cal(k,index);
+ 	for j = 1:5
+ 	center_x = center_rou(i,j)*cos(tower_shadow_seta(i,j));
+ 	center_y = center_rou(i,j)*sin(tower_shadow_seta(i,j));
+ 	dist=sqrt( (mp(neib_ofk,1)-center_x)^2 + (mp(neib_ofk,2)-center_y)^2 );
+ 	temp_seta1 = acos( ([mp(neib_ofk,1),mp(neib_ofk,2)]*[center_x,center_y]')/( norm([mp(neib_ofk,1),mp(neib_ofk,2)]) * norm([center_x,center_y]) ) );
+ 	temp_seta2 = acos( ([-mp(neib_ofk,1),-mp(neib_ofk,2)]*[center_x-mp(neib_ofk,1),center_y-mp(neib_ofk,2)]')/( norm([mp(neib_ofk,1),mp(neib_ofk,2)]) * norm([center_x-mp(neib_ofk,1),center_y-mp(neib_ofk,2)]) ) );
+ 	temp_seta = temp_seta1+temp_seta2;
+ 	x_dist = abs(dist*sin(temp_seta));y_dist = abs(dist*cos(temp_seta));
+ 	if x_dist < 3.5 && y_dist < (center_rou(i,j)-100)
+ 	single_shadow_rate(neib_ofk,i) = single_shadow_rate(neib_ofk,i)+1;
+ 	else
+ 	single_shadow_rate(neib_ofk,i) = single_shadow_rate(neib_ofk,i) + calshadow_2(i,j,k,neib_ofk,vectorSg_x, vectorSg_y, vectorSg_z,mp,mirror_dist,as,ys,cosas,sinas,cosys,sinys);        
+ 	end
+ 	end
+ 	index = index + 1;
+ 	end
+ 	end
+ 	end
+ 	single_shadow_rate = single_shadow_rate./5;
+ 	single_shadow_rate(single_shadow_rate>1)=0.99;
+ 	avg_single_shadow_rate = sum(single_shadow_rate, 1)./1745;% 日 平均阴影
+ 	
+ 	% 算单面镜子的余弦效率
+ 	single_cos_eff = zeros(1745,12);
+ 	for k=1:1745
+ 	R = mp(k,1:end);
+ 	r = [-R(1)/mirror_dist(k), -R(2)/mirror_dist(k), 76/mirror_dist(k)];
+ 	for i=1:12
+ 	for j=1:5
+ 	s = [vectorSg_x(i,j), vectorSg_y(i,j), vectorSg_z(i,j)];
+ 	cosB = (r*s')/(norm(r)*norm(s));
+ 	in_seta = acos(cosB)/2; % 入射角
+ 	single_cos_eff(k,i) = single_cos_eff(k,i) + cos(in_seta);
+ 	end
+ 	single_cos_eff(k,i) = single_cos_eff(k,i)/5;
+ 	end
+ 	end
+ 	avg_single_cos_eff = sum(single_cos_eff, 1)./1745;% 日 平均余弦效率
+ 	
+ 	% 算单面镜子大气透射率
+ 	single_air_rate = zeros(1,1745);
+ 	for k=1:1745
+ 	single_air_rate(k) = 0.99321 - 0.0001176*mirror_dist(k) + 1.97*10^(-8)*mirror_dist(k)^2;
+ 	end
+ 	
+ 	% 算单面镜子的截断效率
+ 	% 计算光线截断效率（以1月21日的 第一个光镜为例）
+ 	single_cut_eff = zeros(1745,12);
+ 	for k = 1:1745
+ 	for i = 1:12
+ 	single_cut_eff(k,i) = 0.90./(1-single_shadow_rate(k,i));
+ 	single_cut_eff(single_cut_eff>1) = 0.90;
+ 	end
+ 	end
+ 	avg_single_cut_eff = sum(single_cut_eff,1)./1745;
+ 	
+ 	% 算单面镜子光学效率
+ 	single_leff = 0.92.*repmat(single_air_rate',1,12).*single_cos_eff.*single_cut_eff.*(1-single_shadow_rate);
+ 	avg_single_leff = sum(single_leff,1)./1745;
+ 	
+ 	% 算DNI
+ 	Da = 0.4237 - 0.00821*(6-3)^2;
+ 	Db = 0.5055 + 0.00595*(6.5-3)^2;
+ 	Dc = 0.2711 + 0.01858*(2.5-3)^2;
+ 	DNI = 1.366*(Da+Db.*exp(-Dc./sinas));
+ 	Efield = DNI.*sum(single_leff,'all')./12;
+ 	avg_Efield = sum(Efield,2)./5;
+ 	avg_Efield_singleM = avg_Efield./1745;
+ 	
+ 	%{
+ 	k = 1;i = 1;j = 1;
+ 	R = mp(k,1:end); % 投影镜坐标
+ 	main_s = -1*[vectorSg_x(i,j), vectorSg_y(i,j), vectorSg_z(i,j)]; % 入射主光轴向量(朝内)
+ 	main_r = [-R(1)/mirror_dist(k), -R(2)/mirror_dist(k), 76/mirror_dist(k)]; % 反射主光轴向量
+ 	EH = atan( (-R(1)/mirror_dist(k)+cosas(i,j)*sinys(i,j))/(-R(2)/mirror_dist(k) + cosas(i,j)*cosys(i,j)) ); % 第k个镜子的EH、AH
+ 	AH = acos( (76/mirror_dist(k)+sinas(i,j))/norm(main_r-main_s) );
+ 	T = [cos(AH) -sin(AH)*cos(EH) sin(EH)*sin(AH)
+ 	sin(AH) cos(EH)*cos(AH) -sin(EH)*cos(AH)
+ 	0 sin(EH) cos(EH)]; % 镜对地坐标变换矩阵
+ 	ex_pos = -3:0.01:3; 
+ 	posR_R = [ex_pos; ex_pos; zeros(1,length(ex_pos))];
+ 	posR_g = T * posR_R + R';% 镜面采样点(已转化为地面坐标系)
+ 	Tcone_g = [cosys(i,j) -sinys(i,j)*sinas(i,j) cosas(i,j)*sinys(i,j)
+ 	-sinys(i,j) -sinas(i,j)*cosys(i,j) cosas(i,j)*cosys(i,j)
+ 	0 cosas(i,j) sinas(i,j)];% 光锥坐标系变为地面坐标系所用矩阵; % 光锥坐标系变为地面坐标系所用矩阵
+ 	N = (-1.*main_s+main_r)./(norm(main_s)*norm(main_r)); % 镜面单位的法向量
+ 	rad_range = 0.00465; %半角展宽范围（rad）
+ 	o = 0:0.00001:rad_range; % 与光锥坐标系z轴的夹角
+ 	t = pi/2-rad_range:0.00002:pi/2+rad_range;% 与光锥坐标系Xs轴夹角t
+ 	o_len = length(o);t_len = length(t); 
+ 	o = repmat(o',1,t_len);% 进行扩展
+ 	t = repmat(t,o_len,1);
+ 	sino = sin(o);coso = cos(o);sint = sin(t); cost =cos(t);
+ 	
+ 	% 获取该光锥划分光线（o,t）,在该镜上对应的反射向量
+ 	conel_box_x = zeros(o_len,t_len);
+ 	conel_box_y = zeros(o_len,t_len);
+ 	conel_box_z = zeros(o_len,t_len);
+ 	conel_box_x_fan = zeros(o_len,t_len);
+ 	conel_box_y_fan = zeros(o_len,t_len);
+ 	conel_box_z_fan = zeros(o_len,t_len);
+ 	for m=1:o_len
+ 	for n=1:t_len
+ 	temp_conel = Tcone_g*[sino(m,n)*cost(m,n),sino(m,n)*sint(m,n),coso(m,n)]'; % 光锥坐标系中向量转为地面坐标系
+ 	temp_conel = temp_conel./norm(temp_conel);
+ 	conel_box_x(m,n) = temp_conel(1);
+ 	conel_box_y(m,n) = temp_conel(2);
+ 	conel_box_z(m,n) = temp_conel(3);
+ 	cos_seta = (N*temp_conel)/(norm(N)*norm(temp_conel)); 
+ 	temp_conel_fan =  (2*cos_seta).*N' - temp_conel; % 单位反射向量 
+ 	conel_box_x_fan(m,n) = temp_conel_fan(1);
+ 	conel_box_y_fan(m,n) = temp_conel_fan(2);
+ 	conel_box_z_fan(m,n) = temp_conel_fan(3);
+ 	end
+ 	end
+ 	
+ 	%{
+ 	% 解方程,对该镜的所有采样点，考察光锥中光线成功射到集热器的比例
+ 	total = length(conel_box_x);
+ 	ava = 0;
+ 	pos_len = length(posR_g);
+ 	for pos_i = 301:301
+ 	x1 = posR_g(1,k);y1 = posR_g(2,k);z1 = posR_g(3,k);
+ 	for m=1:o_len
+ 	for n=1:t_len
+ 	syms y
+ 	% 定义方程组
+ 	eqn = ((conel_box_x(m,n)/conel_box_y(m,n))*(y-y1)+x1)^2 + y^2 == 3.5^2;
+ 	% eqns = [(x - x1)/conel_box_x(m,n) == (y - y1)/conel_box_y(m,n),(z - z1)/conel_box_z(m,n) == (y - y1)/conel_box_y(m,n), x^2 + y^2 == 3.5^2];
+ 	% 求解方程组
+ 	sol = solve(eqn,y)
+ 	% 获取解
+ 	
+ 	end
+ 	end
+ 	end
+ 	rate_test = ava/total
+ 	%}
+ 	
+ 	%}
+ 	
+ 	% 画镜子
+ 	scatter3(mp(1:end,1),mp(1:end,2),mp(1:end,3),'b.');
+ 	xlabel("x/m"),ylabel("y/m"),zlabel("h/m");
+ 	hold on;
+ 	% 画集热塔
+ 	[cx,cy,cz] = cylinder(7);
+ 	cz = cz * 84;
+ 	surf(cx,cy,cz,'FaceColor',[0.8 0.8 0.8]);
+ 	axis equal;
+ 	% 画塔影
+ 	date = 1;time = 5; % 时间
+ 	tower_shadow_len = 84./tan(as);
+ 	tower_shadow_seta = 1.5*pi - ys;
+ 	rou = tower_shadow_len(date,time);
+ 	seta = tower_shadow_seta(date,time);
+ 	x = rou*cos(seta);y=rou*sin(seta);z=0;
+ 	plot3([0,x], [0,y], [0,z], 'LineWidth', 7, 'Color', [0.5, 0.5, 0.5]);
+ 	% 画塔影有效中心
+ 	% scatter3(center_x,center_y,0,'r+');
+ 	% 画太阳光
+ 	sun_x = [0,-50,0,50];sun_y = [-50,0,50,0];sun_z = 150*ones(1,4);
+ 	sun_v = -[vectorSg_x(date,time), vectorSg_y(date,time), vectorSg_z(date,time)];
+ 	for i=1:4
+ 	quiver3(sun_x(i), sun_y(i), sun_z(i), sun_v(1), sun_v(2), sun_v(3), 260,'LineWidth', 1, 'Color', 'r');
+ 	%plot3([sun_x(i),sun_x(i)+sun_v(1)], [sun_y(i),sun_y(i)+sun_v(2)], [sun_z(i),sun_z(i)+sun_v(3)], 'LineWidth', 0.4, 'Color', 'r');
+ 	end
+ 	% 添加图例与标题
+ 	legend('定日镜','集热塔','集热塔阴影','太阳入射光','Location','southeast');
+ 	
+ 	%{
+ 	% 截断效益反射角
+ 	x1 = posR_g(1,1);y1 = posR_g(2,1);z1 = posR_g(3,1);
+ 	scatter3(x1,y1,z1,'r*');
+ 	
+ 	for m=1:1
+ 	for n=1:40:400
+ 	to_x = x1+300*conel_box_x(m,n);
+ 	to_y = y1+300*conel_box_y(m,n);
+ 	to_z = z1+300*conel_box_z(m,n);
+ 	plot3([x1,to_x],[y1,to_y],[z,to_z],'LineWidth',0.01,'Color','b');
+ 	to_x_fan = x1+300*conel_box_x_fan(m,n);
+ 	to_y_fan = y1+300*conel_box_y_fan(m,n);
+ 	to_z_fan = z1+300*conel_box_z_fan(m,n);
+ 	plot3([x1,to_x_fan],[y1,to_y_fan],[z,to_z_fan],'LineWidth',0.01,'Color','g');
+ 	end
+ 	end
+ 	
+ 	plot3([x1,x1+100*N(1)], [y1,y1+100*N(2)],[z1,z1+100*N(3)],'LineWidth',1,'Color','k')
+ 	plot3([x1,x1+300*main_r(1)], [y1,y1+300*main_r(2)],[z1,z1+300*main_r(3)],'LineWidth',0.1,'Color','r')
+ 	plot3([x1,x1-300*main_s(1)], [y1,y1-300*main_s(2)],[z1,z1-300*main_s(3)],'LineWidth',1,'Color','r')
+ 	
+ 	hold off
+ 	%}
+ 	
+ 	
+ 	%{
+ 	% 数据保存
+ 	xlswrite('D:\桌面\data.xlsx',shadow_rate, '镜场各观测日及时间点平均阴影损失率');
+ 	xlswrite('D:\桌面\data.xlsx',shadow_avg_rate, '镜场各观测日平均阴影率');
+ 	xlswrite('D:\桌面\data.xlsx',cos_eff, '镜场各观测日及时间点平均余弦效率');
+ 	xlswrite('D:\桌面\data.xlsx',cos_eff_avg, '镜场各观测日平均余弦率');
+ 	xlswrite('D:\桌面\data.xlsx',single_shadow_rate, '单面镜子各观测日平均阴影损失率');
+ 	xlswrite('D:\桌面\data.xlsx',single_cos_eff, '单面镜子各观测日平均余弦效率');
+ 	xlswrite('D:\桌面\data.xlsx',single_air_rate, '单面镜子各观测日平均大气透射率');
+ 	%}
+ 	\end{lstlisting}
+ 	
+ \section{问题二、三主程序——matlab 源程序}
+ \begin{lstlisting}[language=matlab]
+ clc;clear;
+ % 初始条件
+ D = [-59,-28,0,31,61,92,122,153,184,214,245,275]; % 各观测日 D值
+ ST = [9,10.5,12,13.5,15]; % 各观测时间 ST值
+ 
+ sinS = sin( (2*pi/365).*D ).*sin(2*pi*23.45/360); % sin(太阳赤纬角)
+ S = asin(sinS); % 太阳赤纬角
+ W = (pi/12).*(ST-12); % 太阳时角
+ q = 39.4; % 纬度(度数)
+ sinas = cosd(q).*cos(S')*cos(W) + sin(S').* ones(12,5) .*sind(q);
+ as = asin(sinas); % 太阳高度角（行为日期，列为时间）
+ cosas = cos(as);
+ cosys = ( sinS'.* ones(12,5) - sinas .* sind(q))./(cos(as).*cosd(q));
+ cosys = round(cosys,6); % 防止出现虚数
+ ys = acos(cosys); % 太阳方位角
+ ys = [ys(1:end,1:2),2*pi-ys(1:end,3:5)]; % 进行一些处理，使角度在（0，2*pi）
+ sinys = sin(ys);
+ 
+ % 太阳入射光(地面坐标系 x:东 y:北)[外射方向]
+ vectorSg_x = sinys.*cosas;
+ vectorSg_y = cosys.*cosas;
+ vectorSg_z = sinas;
+ 
+ % 假设：塔在原点不动；镜面高度为4，长为6，宽为6；镜间距离相等
+ tower_pos = [0,0,80];m_H = 4; m_L = 6; m_W = 6;
+ % 沿着x轴放置一系列的镜子，假设初始间隔为5+m_W
+ [dist_x,fval] = fmincon('cal_lighteff', 5+m_W,  [], [], [], [], 5+m_W, 250, []);
+ 
+ % 沿着x = 100轴放置一系列的镜子，假设初始间隔为5+m_W
+ [dist_y,fval] = fmincon('cal_lighteff_2', 5+m_W,  [], [], [], [], 5+m_W, 2*pi*100, []);
+ 
+ 
+ bigarea_x = {};
+ bigarea_y = {};
+ for i=100:dist_x:700-dist_x
+ seta = dist_y/i;
+ for j=0:seta:2*pi-seta
+ [x,y] = pol2cart(j,i);
+ bigarea_x{end+1}=x;
+ bigarea_y{end+1}=y;
+ end
+ end
+ 
+ % 挪动有效区域，判断最佳的余弦效率*大气透射率选择区域
+ avaarea_x = {};
+ avaarea_y = {};
+ biglen = length(bigarea_x);
+ 
+ cos_rate = {};
+ air_rate = {};
+ 
+ 
+ for center_y=225:225
+ center = [0,center_y,80];
+ for index = 1:biglen
+ pos = [bigarea_x{index}, bigarea_y{index}, m_H];
+ real_dist = pdist([pos; center]);
+ if real_dist < 350
+ avaarea_x{end+1} = pos(1);
+ avaarea_y{end+1} = pos(2);
+ end
+ end
+ 
+ % 计算这个center下的余弦效率
+ ava_len = length(avaarea_x);
+ single_cos_eff = zeros(ava_len,12);
+ for k=1:ava_len
+ R = [avaarea_x{k},avaarea_y{k},m_H]; % 该center下有效区域的定日镜坐标
+ m_To_t = pdist([R;[0,0,80]]);
+ r = [-R(1)/m_To_t, -R(2)/m_To_t, 76/m_To_t];
+ for i=1:12
+ for j=1:5
+ s = [vectorSg_x(i,j), vectorSg_y(i,j), vectorSg_z(i,j)];
+ cosB = (r*s')/(norm(r)*norm(s));
+ in_seta = acos(cosB)/2; % 入射角
+ single_cos_eff(k,i) = single_cos_eff(k,i) + cos(in_seta);
+ end
+ single_cos_eff(k,i) = single_cos_eff(k,i)/5;
+ end
+ end
+ cos_12_rate = sum(single_cos_eff,1)./ava_len;
+ cos_rate{end+1} = sum(sum(single_cos_eff))/(ava_len*12);% 年平均余弦效率
+ 
+ % 计算这个center下的大气透射效率
+ % 算单面镜子大气透射率
+ single_air_rate = zeros(1,ava_len);
+ for k=1:ava_len
+ R = [avaarea_x{k},avaarea_y{k},m_H]; % 该center下有效区域的定日镜坐标
+ m_To_t = pdist([R;[0,0,80]]);
+ single_air_rate(k) = 0.99321 - 0.0001176*m_To_t + 1.97*10^(-8)*m_To_t^2;
+ end
+ air_rate{end+1} = sum(single_air_rate)/ava_len;
+ 
+ end
+ 
+ % 变换坐标并绘图
+ %{
+ figure;
+ hold on;
+ xlabel("x/m");ylabel("y/m");
+ for i=1:length(avaarea_y)
+ scatter3(avaarea_x{i},avaarea_y{i}-225,m_H,'r.');
+ end
+ legend("定日镜");
+ hold off;
+ %}
+ 
+ % 算平均镜子光学效率
+ leff_12 = 0.92*air_rate{1}
+ leff = 0.92*air_rate{1}*cos_rate{1}*0.910443773083333*0.943405994833333;
+ 
+ % 算DNI和Efield
+ Da = 0.4237 - 0.00821*(6-3)^2;
+ Db = 0.5055 + 0.00595*(6.5-3)^2;
+ Dc = 0.2711 + 0.01858*(2.5-3)^2;
+ DNI = 1.366*(Da+Db.*exp(-Dc./sinas));
+ Efield = sum(DNI,'all')/60*2632*6*6*leff;
+ avg_m_Efield = Efield/(2632*6*6)
+ 
+ % 用非线性规划求镜面宽高以及建立高度
+ cal_min_shadow = @(sol) (2*sol(3)+sol(2))/(1.6-0.02*sol(3));
+ [args, fval] = fmincon(cal_min_shadow, rand(3,1), [0,1,-2;-1,1,0;1,0,0;0,-1,0], [0;0;8;-2], [], [], [], [], []);
+ args,fval
+ 	\end{lstlisting}
+ 
+ \end{appendices}
+
+
+ 
+ \end{document}
