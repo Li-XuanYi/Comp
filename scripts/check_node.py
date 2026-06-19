@@ -324,6 +324,31 @@ def check_node07() -> List[str]:
     return failures
 
 
+def check_node08() -> List[str]:
+    failures = []
+    ref_path = PROJECT_ROOT / "outputs" / "tables" / "od_distance_duration_reference.csv"
+    fhv_path = PROJECT_ROOT / "outputs" / "tables" / "fhv_with_estimated_distance.csv"
+    for path in [ref_path, fhv_path]:
+        if not path.exists():
+            failures.append("missing: {}".format(path.relative_to(PROJECT_ROOT)))
+    if failures:
+        return failures
+    ref = pd.read_csv(ref_path)
+    fhv = pd.read_csv(fhv_path)
+    if ref.empty or fhv.empty:
+        failures.append("node08 output is empty")
+    if fhv["estimated_distance"].isna().any():
+        failures.append("FHV estimated_distance has missing values")
+    if not fhv["estimated_distance"].gt(0).all():
+        failures.append("FHV estimated_distance must be positive")
+    if fhv["estimated_od_duration_min"].isna().any():
+        failures.append("FHV estimated_od_duration_min has missing values")
+    clean_path = PROJECT_ROOT / "data" / "interim" / "fhv_clean.parquet"
+    if clean_path.exists() and len(fhv) != len(pd.read_parquet(clean_path)):
+        failures.append("FHV enriched row count does not match clean input")
+    return failures
+
+
 CHECKS: Dict[str, Callable[[], List[str]]] = {
     "node00": check_node00,
     "node01": check_node01,
@@ -333,6 +358,7 @@ CHECKS: Dict[str, Callable[[], List[str]]] = {
     "node05": check_node05,
     "node06": check_node06,
     "node07": check_node07,
+    "node08": check_node08,
 }
 
 
