@@ -251,12 +251,36 @@ def check_node04() -> List[str]:
     return failures
 
 
+def check_node05() -> List[str]:
+    failures = []
+    figure_names = [
+        "brooklyn_total_demand_map.png",
+        "hourly_pattern.png",
+        "weekday_weekend_pattern.png",
+        "weather_demand_relation.png",
+        "top20_zones.png",
+    ]
+    for name in figure_names:
+        path = PROJECT_ROOT / "outputs" / "figures" / name
+        if not path.exists():
+            failures.append("missing: outputs/figures/{}".format(name))
+        elif path.stat().st_size <= 0:
+            failures.append("empty figure: outputs/figures/{}".format(name))
+    summary_path = PROJECT_ROOT / "outputs" / "tables" / "node05_eda_summary.csv"
+    if not summary_path.exists():
+        failures.append("missing: outputs/tables/node05_eda_summary.csv")
+    elif pd.read_csv(summary_path).empty:
+        failures.append("node05 EDA summary is empty")
+    return failures
+
+
 CHECKS: Dict[str, Callable[[], List[str]]] = {
     "node00": check_node00,
     "node01": check_node01,
     "node02": check_node02,
     "node03": check_node03,
     "node04": check_node04,
+    "node05": check_node05,
 }
 
 
