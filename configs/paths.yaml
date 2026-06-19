@@ -27,3 +27,5 @@ outputs:
 node_outputs:
   node01_data_audit: "outputs/tables/node01_data_audit.csv"
   node02_cleaning_report: "outputs/tables/node02_cleaning_report.csv"
+  node03_demand_panel: "data/processed/hourly_demand_panel.parquet"
+  node03_demand_panel_summary: "outputs/tables/node03_demand_panel_summary.csv"

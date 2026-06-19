@@ -1,0 +1,2 @@
+﻿n_rows,n_zones,datetime_min,datetime_max,total_pickups,mean_hourly_pickups,zero_demand_rows
+45384,61,2019-01-01,2019-01-31 23:00:00,276103,6.083707914683589,12123

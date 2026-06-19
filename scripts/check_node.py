@@ -173,10 +173,52 @@ def check_node02() -> List[str]:
     return failures
 
 
+def check_node03() -> List[str]:
+    failures = []
+    panel_path = PROJECT_ROOT / "data" / "processed" / "hourly_demand_panel.parquet"
+    summary_path = PROJECT_ROOT / "outputs" / "tables" / "node03_demand_panel_summary.csv"
+    if not panel_path.exists():
+        failures.append("missing: data/processed/hourly_demand_panel.parquet")
+        return failures
+    if not summary_path.exists():
+        failures.append("missing: outputs/tables/node03_demand_panel_summary.csv")
+
+    panel = pd.read_parquet(panel_path)
+    required = {
+        "zone_id",
+        "datetime_hour",
+        "date",
+        "hour",
+        "weekday",
+        "is_weekend",
+        "pickup_count",
+        "yellow_count",
+        "green_count",
+    }
+    missing = required - set(panel.columns)
+    if missing:
+        failures.append("missing panel columns: {}".format(", ".join(sorted(missing))))
+        return failures
+    if panel["pickup_count"].lt(0).any():
+        failures.append("pickup_count has negative values")
+    if panel["datetime_hour"].min() != pd.Timestamp("2019-01-01 00:00:00"):
+        failures.append("wrong panel start")
+    if panel["datetime_hour"].max() != pd.Timestamp("2019-01-31 23:00:00"):
+        failures.append("wrong panel end")
+    expected_rows = panel["zone_id"].nunique() * 24 * 31
+    if len(panel) != expected_rows:
+        failures.append("panel is not complete: got {}, expected {}".format(len(panel), expected_rows))
+    duplicate_count = panel.duplicated(["zone_id", "datetime_hour"]).sum()
+    if duplicate_count:
+        failures.append("duplicate zone-hour rows: {}".format(int(duplicate_count)))
+    return failures
+
+
 CHECKS: Dict[str, Callable[[], List[str]]] = {
     "node00": check_node00,
     "node01": check_node01,
     "node02": check_node02,
+    "node03": check_node03,
 }
 
 
