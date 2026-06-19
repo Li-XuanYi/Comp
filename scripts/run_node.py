@@ -76,6 +76,13 @@ def run_node06() -> None:
     print("node06 baseline metrics written to {}".format(destination))
 
 
+def run_node07() -> None:
+    from src.demand_model import write_main_model_outputs
+
+    destination = write_main_model_outputs()
+    print("node07 model metrics written to {}".format(destination))
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run a modeling node.")
     parser.add_argument("--node", required=True, help="Node id, for example node00.")
@@ -105,6 +112,9 @@ def main() -> int:
         return 0
     if node == "node06":
         run_node06()
+        return 0
+    if node == "node07":
+        run_node07()
         return 0
     raise SystemExit(
         "{} is not implemented yet. Complete nodes sequentially.".format(args.node)

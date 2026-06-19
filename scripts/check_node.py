@@ -298,6 +298,32 @@ def check_node06() -> List[str]:
     return failures
 
 
+def check_node07() -> List[str]:
+    failures = []
+    metrics_path = PROJECT_ROOT / "outputs" / "tables" / "node07_model_metrics.csv"
+    pred_path = PROJECT_ROOT / "outputs" / "tables" / "pred_demand_2019_02_01_hourly.csv"
+    fig_path = PROJECT_ROOT / "outputs" / "figures" / "model_validation_compare.png"
+    for path in [metrics_path, pred_path, fig_path]:
+        if not path.exists():
+            failures.append("missing: {}".format(path.relative_to(PROJECT_ROOT)))
+    if failures:
+        return failures
+    pred = pd.read_csv(pred_path, parse_dates=["datetime_hour"])
+    if pred["predicted_demand"].lt(0).any():
+        failures.append("negative demand prediction")
+    hours = pred["datetime_hour"].dt.hour.nunique()
+    if hours != 24:
+        failures.append("prediction does not cover 24 hours")
+    expected_rows = pred["zone_id"].nunique() * 24
+    if len(pred) != expected_rows:
+        failures.append("prediction row count mismatch")
+    if pred[["zone_id", "datetime_hour", "predicted_demand"]].isna().any().any():
+        failures.append("prediction has key missing values")
+    if fig_path.stat().st_size <= 0:
+        failures.append("model validation figure is empty")
+    return failures
+
+
 CHECKS: Dict[str, Callable[[], List[str]]] = {
     "node00": check_node00,
     "node01": check_node01,
@@ -306,6 +332,7 @@ CHECKS: Dict[str, Callable[[], List[str]]] = {
     "node04": check_node04,
     "node05": check_node05,
     "node06": check_node06,
+    "node07": check_node07,
 }
 
 

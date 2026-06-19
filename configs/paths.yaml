@@ -35,3 +35,5 @@ node_outputs:
   node05_eda_summary: "outputs/tables/node05_eda_summary.csv"
   node06_baseline_metrics: "outputs/tables/node06_baseline_metrics.csv"
   node06_baseline_validation_predictions: "outputs/tables/node06_baseline_validation_predictions.csv"
+  node07_model_metrics: "outputs/tables/node07_model_metrics.csv"
+  node07_prediction: "outputs/tables/pred_demand_2019_02_01_hourly.csv"
