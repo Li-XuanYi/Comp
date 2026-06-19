@@ -427,6 +427,37 @@ def check_node11() -> List[str]:
     return failures
 
 
+def check_node12() -> List[str]:
+    failures = []
+    required = [
+        PROJECT_ROOT / "outputs" / "submission" / "q1_hourly_prediction.xlsx",
+        PROJECT_ROOT / "outputs" / "submission" / "q2_fhv_pricing.xlsx",
+        PROJECT_ROOT / "outputs" / "submission" / "q3_vehicle_allocation.xlsx",
+        PROJECT_ROOT / "outputs" / "submission" / "q4_base_location.xlsx",
+        PROJECT_ROOT / "outputs" / "submission" / "model_summary.md",
+    ]
+    for path in required:
+        if not path.exists():
+            failures.append("missing: {}".format(path.relative_to(PROJECT_ROOT)))
+        elif path.stat().st_size <= 0:
+            failures.append("empty output: {}".format(path.relative_to(PROJECT_ROOT)))
+    fig_dir = PROJECT_ROOT / "outputs" / "submission" / "figures"
+    if not fig_dir.exists() or not list(fig_dir.glob("*.png")):
+        failures.append("submission figures are missing")
+    for path in required[:4]:
+        if path.exists():
+            try:
+                frame = pd.read_excel(path)
+            except Exception as exc:
+                failures.append("{} could not be read: {}".format(path.name, exc))
+                continue
+            if frame.empty:
+                failures.append("{} is empty".format(path.name))
+            if frame.isna().all(axis=1).any():
+                failures.append("{} contains fully empty rows".format(path.name))
+    return failures
+
+
 CHECKS: Dict[str, Callable[[], List[str]]] = {
     "node00": check_node00,
     "node01": check_node01,
@@ -440,6 +471,7 @@ CHECKS: Dict[str, Callable[[], List[str]]] = {
     "node09": check_node09,
     "node10": check_node10,
     "node11": check_node11,
+    "node12": check_node12,
 }
 
 

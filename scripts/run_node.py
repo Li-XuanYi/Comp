@@ -111,6 +111,12 @@ def run_node11() -> None:
     print("node11 base location results written to {}".format(destination))
 
 
+def run_node12() -> None:
+    import subprocess
+
+    subprocess.check_call([sys.executable, str(PROJECT_ROOT / "scripts" / "export_submission.py")])
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run a modeling node.")
     parser.add_argument("--node", required=True, help="Node id, for example node00.")
@@ -155,6 +161,9 @@ def main() -> int:
         return 0
     if node == "node11":
         run_node11()
+        return 0
+    if node == "node12":
+        run_node12()
         return 0
     raise SystemExit(
         "{} is not implemented yet. Complete nodes sequentially.".format(args.node)

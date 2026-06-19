@@ -45,3 +45,8 @@ node_outputs:
   node10_revenue_gain_summary: "outputs/tables/node10_revenue_gain_summary.csv"
   node11_base_results: "outputs/tables/base_location_results.csv"
   node11_base_assignment: "outputs/tables/base_location_assignment.csv"
+  node12_q1_prediction: "outputs/submission/q1_hourly_prediction.xlsx"
+  node12_q2_pricing: "outputs/submission/q2_fhv_pricing.xlsx"
+  node12_q3_allocation: "outputs/submission/q3_vehicle_allocation.xlsx"
+  node12_q4_base_location: "outputs/submission/q4_base_location.xlsx"
+  node12_model_summary: "outputs/submission/model_summary.md"
