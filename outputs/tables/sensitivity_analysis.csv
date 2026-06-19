@@ -1,0 +1,17 @@
+﻿analysis_type,parameter,avg_fhv_price,avg_profit_rate,estimated_incremental_revenue,estimated_incremental_profit
+pricing_parameters,"minimum_profit_rate=0.1,discount_rate=0.05",16.485380266554174,0.612703173081725,,
+pricing_parameters,"minimum_profit_rate=0.1,discount_rate=0.08",15.964789310768253,0.5617757044580918,,
+pricing_parameters,"minimum_profit_rate=0.1,discount_rate=0.12",15.270668036387022,0.4938724129599137,,
+pricing_parameters,"minimum_profit_rate=0.15,discount_rate=0.05",16.485380266554174,0.612703173081725,,
+pricing_parameters,"minimum_profit_rate=0.15,discount_rate=0.08",15.964789310768253,0.5617757044580918,,
+pricing_parameters,"minimum_profit_rate=0.15,discount_rate=0.12",15.270668036387022,0.4938724129599137,,
+pricing_parameters,"minimum_profit_rate=0.2,discount_rate=0.05",16.485380266554174,0.612703173081725,,
+pricing_parameters,"minimum_profit_rate=0.2,discount_rate=0.08",15.964789310768253,0.5617757044580918,,
+pricing_parameters,"minimum_profit_rate=0.2,discount_rate=0.12",15.270668036387022,0.4938724129599137,,
+vehicle_count,N=25,,,1919.272995263199,795.0444004461465
+vehicle_count,N=50,,,3248.2731879370713,1283.5085190702325
+vehicle_count,N=75,,,4428.689664113726,1742.5032044166014
+vehicle_count,N=100,,,5625.41346321155,2183.851888386337
+vehicle_count,N=150,,,7407.355275922728,2787.1141631853043
+vehicle_count,N=200,,,7645.048991929955,2867.9296037136164
+vehicle_count,N=250,,,7645.048991929955,2867.9296037136164

@@ -434,6 +434,7 @@ def check_node12() -> List[str]:
         PROJECT_ROOT / "outputs" / "submission" / "q2_fhv_pricing.xlsx",
         PROJECT_ROOT / "outputs" / "submission" / "q3_vehicle_allocation.xlsx",
         PROJECT_ROOT / "outputs" / "submission" / "q4_base_location.xlsx",
+        PROJECT_ROOT / "outputs" / "submission" / "sensitivity_analysis.xlsx",
         PROJECT_ROOT / "outputs" / "submission" / "model_summary.md",
     ]
     for path in required:
@@ -444,7 +445,7 @@ def check_node12() -> List[str]:
     fig_dir = PROJECT_ROOT / "outputs" / "submission" / "figures"
     if not fig_dir.exists() or not list(fig_dir.glob("*.png")):
         failures.append("submission figures are missing")
-    for path in required[:4]:
+    for path in required[:5]:
         if path.exists():
             try:
                 frame = pd.read_excel(path)

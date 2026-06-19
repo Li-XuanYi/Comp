@@ -17,3 +17,5 @@ def test_price_features_include_trip_geometry_and_time():
     assert "duration_min" in PRICE_FEATURES
     assert "PULocationID" in PRICE_FEATURES
     assert "hour" in PRICE_FEATURES
+    assert "temperature" in PRICE_FEATURES
+    assert "precipitation" in PRICE_FEATURES

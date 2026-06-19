@@ -1,2 +1,2 @@
 ﻿model,MAE,RMSE,SMAPE,best_baseline_MAE,gbdt_only_MAE,gbdt_weight,baseline_weight,beats_best_baseline_mae
-hist_gradient_boosting_poisson_blend,1.9031184390725995,3.5815774414878243,0.8493228786447813,1.9820452771272443,2.0398673592508003,0.4,0.6,True
+hist_gradient_boosting_poisson_blend,1.9167214995391897,3.628878139931753,0.8500289501274879,1.9820452771272443,2.104131909265617,0.4,0.6,True

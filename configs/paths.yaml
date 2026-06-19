@@ -50,3 +50,5 @@ node_outputs:
   node12_q3_allocation: "outputs/submission/q3_vehicle_allocation.xlsx"
   node12_q4_base_location: "outputs/submission/q4_base_location.xlsx"
   node12_model_summary: "outputs/submission/model_summary.md"
+  rigor_sensitivity_analysis: "outputs/tables/sensitivity_analysis.csv"
+  rigor_sensitivity_submission: "outputs/submission/sensitivity_analysis.xlsx"

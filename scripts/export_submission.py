@@ -11,6 +11,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.io_utils import get_project_root, load_paths
+from src.sensitivity_analysis import write_sensitivity_analysis
 
 
 SUBMISSION_FILES = [
@@ -18,6 +19,7 @@ SUBMISSION_FILES = [
     "q2_fhv_pricing.xlsx",
     "q3_vehicle_allocation.xlsx",
     "q4_base_location.xlsx",
+    "sensitivity_analysis.xlsx",
     "model_summary.md",
 ]
 
@@ -47,6 +49,7 @@ def build_model_summary(paths) -> str:
     node07_metrics = pd.read_csv(root / paths["node_outputs"]["node07_model_metrics"]).iloc[0]
     node09_summary = pd.read_csv(root / paths["node_outputs"]["node09_pricing_summary"]).iloc[0]
     node10_summary = pd.read_csv(root / paths["node_outputs"]["node10_revenue_gain_summary"])
+    sensitivity = pd.read_csv(root / paths["node_outputs"]["rigor_sensitivity_analysis"])
     optimal = q4[q4["scenario"] == "optimal_p_median"].iloc[0]
 
     return "\n".join(
@@ -86,9 +89,16 @@ def build_model_summary(paths) -> str:
                 optimal["base_zone_names"],
                 optimal["weighted_dispatch_time_cost"],
             ),
+            "Feasibility note: zone-level base IDs identify service areas; the final physical depot should be placed on feasible parking or dispatch property inside the selected TLC zone.",
+            "",
+            "## Sensitivity Analysis",
+            "Output: sensitivity_analysis.xlsx with {} scenarios covering vehicle counts and pricing parameters.".format(
+                len(sensitivity)
+            ),
+            "The vehicle-count analysis reports N=25,50,75,100,150,200,250; pricing analysis varies minimum profit rate and competitive discount.",
             "",
             "## Assumptions",
-            "- Weather features use a deterministic replaceable hourly template because no external weather file was supplied.",
+            "- Weather features use Open-Meteo historical hourly reanalysis for Brooklyn when network access is available, with a deterministic template fallback for reproducibility.",
             "- OD pairs with insufficient taxi samples use centroid-distance fallback calibrated by historical average speed.",
             "- Vehicle counts are parameterized as 50, 100, and 200 because the problem statement does not fix an added fleet size.",
             "",
@@ -99,11 +109,26 @@ def build_model_summary(paths) -> str:
 def export_submission() -> None:
     paths = load_paths()
     root = get_project_root(paths)
+    write_sensitivity_analysis(paths)
     q1 = pd.read_csv(root / paths["node_outputs"]["node07_prediction"])
     q2 = pd.read_csv(root / paths["node_outputs"]["node09_fhv_pricing"])
     q3 = pd.read_csv(root / paths["node_outputs"]["node10_vehicle_allocation"])
     q4_results = pd.read_csv(root / paths["node_outputs"]["node11_base_results"])
     q4_assignment = pd.read_csv(root / paths["node_outputs"]["node11_base_assignment"])
+    sensitivity = pd.read_csv(root / paths["node_outputs"]["rigor_sensitivity_analysis"])
+    feasibility = pd.DataFrame(
+        [
+            {
+                "base_zone_id": int(zone_id),
+                "base_zone_name": zone_name,
+                "feasibility_note": "TLC zone-level base; choose a legal parking/dispatch facility inside the zone. Avoid interpreting the zone label as the exact depot parcel.",
+            }
+            for zone_id, zone_name in zip(
+                str(q4_results.loc[q4_results["scenario"] == "optimal_p_median", "base_zone_ids"].iloc[0]).split(";"),
+                str(q4_results.loc[q4_results["scenario"] == "optimal_p_median", "base_zone_names"].iloc[0]).split(";"),
+            )
+        ]
+    )
 
     q1.to_excel(_path(paths, "node12_q1_prediction"), index=False)
     q2.to_excel(_path(paths, "node12_q2_pricing"), index=False)
@@ -111,6 +136,8 @@ def export_submission() -> None:
     with pd.ExcelWriter(_path(paths, "node12_q4_base_location")) as writer:
         q4_results.to_excel(writer, sheet_name="base_results", index=False)
         q4_assignment.to_excel(writer, sheet_name="assignment", index=False)
+        feasibility.to_excel(writer, sheet_name="feasibility_notes", index=False)
+    sensitivity.to_excel(_path(paths, "rigor_sensitivity_submission"), index=False)
 
     _path(paths, "node12_model_summary").write_text(
         build_model_summary(paths), encoding="utf-8"
@@ -121,4 +148,3 @@ def export_submission() -> None:
 
 if __name__ == "__main__":
     export_submission()
-

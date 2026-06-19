@@ -7,6 +7,6 @@ def test_submission_file_contract():
         "q2_fhv_pricing.xlsx",
         "q3_vehicle_allocation.xlsx",
         "q4_base_location.xlsx",
+        "sensitivity_analysis.xlsx",
         "model_summary.md",
     ]
-

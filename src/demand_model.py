@@ -13,7 +13,7 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 from src.demand_baseline import TRAIN_END, VALID_END, evaluate_baselines
 from src.io_utils import get_project_root, load_paths, output_path, read_taxi_zone_lookup
 from src.metrics import mae, rmse, smape
-from src.weather_calendar import build_weather_template, calendar_features
+from src.weather_calendar import calendar_features, load_or_create_weather
 
 
 MODEL_FEATURES = [
@@ -89,7 +89,7 @@ def build_future_frame(features: pd.DataFrame, paths: Dict = None) -> pd.DataFra
         [sorted(brooklyn["zone_id"].astype(int)), hours], names=["zone_id", "datetime_hour"]
     ).to_frame(index=False)
     future = future.merge(brooklyn, on="zone_id", how="left")
-    weather = build_weather_template(paths)
+    weather = load_or_create_weather(paths)
     future = future.merge(weather, on="datetime_hour", how="left")
     cal = calendar_features(future["datetime_hour"])
     future = pd.concat([future.reset_index(drop=True), cal], axis=1)

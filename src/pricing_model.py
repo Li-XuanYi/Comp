@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 
 from src.io_utils import get_project_root, load_paths, output_path
 from src.metrics import mae, rmse, smape
-from src.weather_calendar import calendar_features
+from src.weather_calendar import calendar_features, load_or_create_weather
 
 
 PRICE_FEATURES = [
@@ -20,6 +20,11 @@ PRICE_FEATURES = [
     "hour",
     "weekday",
     "is_weekend",
+    "temperature",
+    "precipitation",
+    "snow_indicator",
+    "wind_speed",
+    "visibility",
 ]
 
 
@@ -41,10 +46,20 @@ def build_taxi_price_training_frame(paths: Dict = None) -> pd.DataFrame:
         ]
     ].rename(columns={"trip_distance": "distance"})
     taxi["pickup_datetime"] = pd.to_datetime(taxi["pickup_datetime"])
-    taxi["hour"] = taxi["pickup_datetime"].dt.hour
-    cal = calendar_features(taxi["pickup_datetime"].dt.floor("H"))
+    taxi["datetime_hour"] = taxi["pickup_datetime"].dt.floor("H")
+    taxi["hour"] = taxi["datetime_hour"].dt.hour
+    cal = calendar_features(taxi["datetime_hour"])
     taxi["weekday"] = cal["weekday"].values
     taxi["is_weekend"] = cal["is_weekend"].values
+    weather = load_or_create_weather(paths).drop(columns=["weather_source"], errors="ignore")
+    taxi = taxi.merge(weather, on="datetime_hour", how="left")
+    taxi[["temperature", "precipitation", "snow_indicator", "wind_speed", "visibility"]] = taxi[
+        ["temperature", "precipitation", "snow_indicator", "wind_speed", "visibility"]
+    ].fillna(
+        taxi[["temperature", "precipitation", "snow_indicator", "wind_speed", "visibility"]].median(
+            numeric_only=True
+        )
+    )
     taxi = taxi[
         (taxi["distance"] > 0)
         & (taxi["duration_min"] > 0)
@@ -85,10 +100,20 @@ def build_fhv_pricing_frame(paths: Dict = None) -> pd.DataFrame:
     fhv["duration_min"] = fhv["observed_duration_min"].fillna(
         fhv["estimated_od_duration_min"]
     )
-    fhv["hour"] = fhv["pickup_datetime"].dt.hour
-    cal = calendar_features(fhv["pickup_datetime"].dt.floor("H"))
+    fhv["datetime_hour"] = fhv["pickup_datetime"].dt.floor("H")
+    fhv["hour"] = fhv["datetime_hour"].dt.hour
+    cal = calendar_features(fhv["datetime_hour"])
     fhv["weekday"] = cal["weekday"].values
     fhv["is_weekend"] = cal["is_weekend"].values
+    weather = load_or_create_weather(paths).drop(columns=["weather_source"], errors="ignore")
+    fhv = fhv.merge(weather, on="datetime_hour", how="left")
+    fhv[["temperature", "precipitation", "snow_indicator", "wind_speed", "visibility"]] = fhv[
+        ["temperature", "precipitation", "snow_indicator", "wind_speed", "visibility"]
+    ].fillna(
+        fhv[["temperature", "precipitation", "snow_indicator", "wind_speed", "visibility"]].median(
+            numeric_only=True
+        )
+    )
     return fhv
 
 
@@ -144,4 +169,3 @@ def write_pricing_outputs(paths: Dict = None):
     result.to_csv(result_path, index=False, encoding="utf-8-sig")
     summary.to_csv(summary_path, index=False, encoding="utf-8-sig")
     return result_path
-
