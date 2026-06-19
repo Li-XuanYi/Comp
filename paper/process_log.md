@@ -33,3 +33,9 @@
 - 论文结构检查：`main.tex` 中 equation/table/figure/cases/subfigure 环境数量成对匹配；未发现 `TODO`、`待补充`、旧基地 `65;111;222` 或拼车旧下界表述。
 - LaTeX 编译：本地 `compile_latex.py` 检测到项目要求 XeLaTeX，但当前环境没有 TeX Live/MacTeX，因此未生成 PDF。
 - Overleaf 包：已生成 `paper/overleaf_upload.zip`，包含 `main.tex`、`figures/` 和 `template/`，上传 Overleaf 后请选择 XeLaTeX 编译。
+## 节点 5：优秀论文风格评估与图表增强
+- 评估结论：第一版结构完整、数值一致，但图表支撑不足，正文偏技术说明，缺少优秀数模论文常见的“总流程-分问题可视化-结果解释-敏感性支撑”层次。
+- 新增图表：`model_framework.png`、`pricing_economics.png`、`vehicle_profit_sensitivity.png`，并把已有 `top20_zones.png`、`weekday_weekend_pattern.png`、`weather_demand_relation.png` 纳入正文。
+- 写作增强：重写摘要，使其按“问题-方法-结果-价值”展开；在问题分析中加入闭环模型流程；在数据探索、定价和车辆分配部分增加图文互证。
+- 检查：论文结构检查通过，figure/table/subfigure/equation/cases 环境成对匹配；所有图片引用存在；相关 pytest 通过 6 项。
+- 交付：重新生成 `paper/overleaf_upload.zip`，需在 Overleaf 选择 XeLaTeX 重新编译新版 PDF。

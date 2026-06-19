@@ -60,7 +60,16 @@
 \section{问题分析与总体思路}
 题目数据具有典型的多源、时空和业务链条特征。需求预测需要处理区域间强烈不均衡和小时周期性；订单定价需要在出租车参考价格、约租车竞争力和平台利润之间折中；车辆分配需要把车辆数这一整数资源投向边际收益最高的区域；基地选址则需要考虑从基地到需求区域的派车时间，并用需求和利润共同刻画服务价值。
 
-本文采取“预测--定价--分配--选址”的递进式建模策略。首先将黄车和绿车订单清洗后聚合成布鲁克林61个区域、744个小时的完整面板；其次以该面板训练小时需求模型，得到2019年2月1日61个区域的逐小时需求；然后基于黄车和绿车的总费用训练参考价格模型，将参考价迁移到FHV订单，并加入成本和利润约束得到约租车价格；最后将中午12时需求、分区平均利润和平均服务时长作为车辆调度和基地选址的输入。该思路使每一问输出均服务于下一问，避免把预测、定价和调度割裂处理。
+本文采取“预测--定价--分配--选址”的递进式建模策略。首先将黄车和绿车订单清洗后聚合成布鲁克林61个区域、744个小时的完整面板；其次以该面板训练小时需求模型，得到2019年2月1日61个区域的逐小时需求；然后基于黄车和绿车的总费用训练参考价格模型，将参考价迁移到FHV订单，并加入成本和利润约束得到约租车价格；最后将中午12时需求、分区平均利润和平均服务时长作为车辆调度和基地选址的输入。该思路使每一问输出均服务于下一问，避免把预测、定价和调度割裂处理。总体流程如图\ref{fig:framework}所示。
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{model_framework.png}
+    \caption{约租车调度决策建模流程}
+    \label{fig:framework}
+\end{figure}
+
+从竞赛论文表达角度看，本文不把四个问题写成孤立小模型，而是把问题一的区域小时需求作为问题三和问题四的需求权重，把问题二的逐单利润转化为分区收益参数，使后续车辆投放和基地选址都具有明确的业务含义。这样既保留机器学习模型的预测能力，也保证优化结果可以解释为可执行的调度建议。
 
 \section{模型假设}
 \begin{enumerate}
@@ -143,7 +152,31 @@ FHV约租车 & 115 & 115 & 0 \\
     \label{fig:eda}
 \end{figure}
 
-图\ref{fig:eda}显示，布鲁克林核心商业区与交通活跃区订单量明显更高，需求在早晚高峰和夜间出行时段具有较强周期性。该特征说明，仅用全局平均值难以捕捉区域差异，需要在预测模型中引入区域编号、小时、星期、节假日、天气和历史滞后需求。
+图\ref{fig:eda}显示，布鲁克林核心商业区与交通活跃区订单量明显更高，需求在早晚高峰和夜间出行时段具有较强周期性。进一步地，图\ref{fig:eda_more}给出高需求区域、工作日/周末模式和天气因素的关系。可以看出，订单集中于少数核心区域，且出行需求随星期类型和天气状态变化而波动。该特征说明，仅用全局平均值难以捕捉区域差异，需要在预测模型中引入区域编号、小时、星期、节假日、天气和历史滞后需求。
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{top20_zones.png}
+        \caption{需求最高的20个TLC区域}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{weekday_weekend_pattern.png}
+        \caption{工作日与周末需求差异}
+    \end{subfigure}
+    \caption{布鲁克林需求的区域集中性与日历效应}
+    \label{fig:eda_more}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.76\textwidth]{weather_demand_relation.png}
+    \caption{天气因素与布鲁克林出租车需求的关系}
+    \label{fig:weather_demand}
+\end{figure}
 
 \section{问题一：订单需求预测模型}
 
@@ -247,6 +280,14 @@ FHV订单数 & 115 \\
 \bottomrule
 \end{tabular}
 \end{table}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\textwidth]{pricing_economics.png}
+    \caption{FHV定价结果与订单经济性对比}
+    \label{fig:pricing_economics}
+\end{figure}
+
+图\ref{fig:pricing_economics}表明，FHV定价整体低于出租车参考价，但仍高于估计成本，说明竞争折扣和成本底线同时起作用。该图也解释了为什么后续车辆分配不能只看需求量，还需要结合分区利润。
 \section{问题三：新增车辆区域分配模型}
 
 \subsection{边际利润分配策略}
@@ -286,6 +327,14 @@ FHV订单数 & 115 \\
     \label{fig:vehicle_allocation}
 \end{figure}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.78\textwidth]{vehicle_profit_sensitivity.png}
+    \caption{新增车辆规模对中午增量收益的影响}
+    \label{fig:vehicle_profit_sensitivity}
+\end{figure}
+
+图\ref{fig:vehicle_profit_sensitivity}显示，车辆规模从25辆增加到150辆时，增量利润增长较快；当车辆数接近200辆后，预测需求基本被覆盖，继续增加车辆只会形成备用运力，边际收益趋于零。
 从图\ref{fig:vehicle_allocation}可以看出，车辆主要投向Downtown Brooklyn/MetroTech、Brooklyn Heights、Boerum Hill、Fort Greene等需求密集且利润较高的区域。该结果与需求热力图基本一致，但并非完全按需求排序，而是同时考虑服务时长和利润。
 
 \section{问题四：三基地选址模型}
