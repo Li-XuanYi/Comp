@@ -41,6 +41,13 @@ def run_node01() -> None:
     print("node01 data audit written to {}".format(destination))
 
 
+def run_node02() -> None:
+    from src.preprocessing import write_clean_outputs
+
+    destination = write_clean_outputs()
+    print("node02 cleaning report written to {}".format(destination))
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run a modeling node.")
     parser.add_argument("--node", required=True, help="Node id, for example node00.")
@@ -55,6 +62,9 @@ def main() -> int:
         return 0
     if node == "node01":
         run_node01()
+        return 0
+    if node == "node02":
+        run_node02()
         return 0
     raise SystemExit(
         "{} is not implemented yet. Complete nodes sequentially.".format(args.node)

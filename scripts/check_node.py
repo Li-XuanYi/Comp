@@ -131,9 +131,52 @@ def check_node01() -> List[str]:
     return failures
 
 
+def check_node02() -> List[str]:
+    failures = []
+    report_path = PROJECT_ROOT / "outputs" / "tables" / "node02_cleaning_report.csv"
+    if not report_path.exists():
+        failures.append("missing: outputs/tables/node02_cleaning_report.csv")
+
+    clean_paths = {
+        "yellow": PROJECT_ROOT / "data" / "interim" / "yellow_clean.parquet",
+        "green": PROJECT_ROOT / "data" / "interim" / "green_clean.parquet",
+        "fhv": PROJECT_ROOT / "data" / "interim" / "fhv_clean.parquet",
+    }
+    for dataset, path in clean_paths.items():
+        if not path.exists():
+            failures.append("missing: {}".format(path.relative_to(PROJECT_ROOT)))
+            continue
+        try:
+            df = pd.read_parquet(path)
+        except Exception as exc:
+            failures.append("{} read failed: {}".format(dataset, exc))
+            continue
+        if df.empty:
+            failures.append("{} clean data is empty".format(dataset))
+            continue
+        if not df["duration_min"].gt(0).all():
+            failures.append("{} has non-positive duration".format(dataset))
+        if not df["duration_min"].le(180).all():
+            failures.append("{} has duration over 180 minutes".format(dataset))
+        if not pd.to_datetime(df["pickup_datetime"]).ge("2019-01-01").all():
+            failures.append("{} has pickup before 2019-01-01".format(dataset))
+        if not pd.to_datetime(df["pickup_datetime"]).lt("2019-02-01").all():
+            failures.append("{} has pickup on/after 2019-02-01".format(dataset))
+        if dataset in {"yellow", "green"}:
+            if not df["trip_distance"].gt(0).all():
+                failures.append("{} has non-positive trip distance".format(dataset))
+            if not df["total_amount"].gt(0).all():
+                failures.append("{} has non-positive total amount".format(dataset))
+            if not df["fare_amount"].gt(0).all():
+                failures.append("{} has non-positive fare amount".format(dataset))
+
+    return failures
+
+
 CHECKS: Dict[str, Callable[[], List[str]]] = {
     "node00": check_node00,
     "node01": check_node01,
+    "node02": check_node02,
 }
 
 

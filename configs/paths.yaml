@@ -26,3 +26,4 @@ outputs:
 
 node_outputs:
   node01_data_audit: "outputs/tables/node01_data_audit.csv"
+  node02_cleaning_report: "outputs/tables/node02_cleaning_report.csv"
