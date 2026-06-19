@@ -52,3 +52,10 @@
 - 建模加固：新增需求转化系数 `rho` 灵敏度表；说明成本函数为运营情景参数；补充 115 条 FHV 样本覆盖 50 个起点区域、11 个区域需全局均值回填；解释车辆分配为边际收益序列排序。
 - 格式修订：基地表头改为“加权派车时间目标值”；摘要和结论中将 Green-Wood Cemetery、Starrett City 明确为 TLC 分区；英文文献作者按 GB/T 7714 常见格式大写。
 - 检查：LaTeX 结构检查通过，7 个 table、9 个 figure、11 个图片引用、5 个 cite/bibitem 全部匹配；相关 pytest 通过 6 项；`git diff --check` 通过。
+## 节点 8：中文图表与模板式排版增强
+- 用户反馈吸收：根据截图中优秀论文的写法，强化“流程图--模型解释--结果图--分析段”的呈现方式，减少单纯文字堆叠。
+- 流程图重绘：将 `model_framework.png` 改为中文分层矩形流程图，突出“数据与特征层、四问模型层、结果检验层”，弱化装饰化视觉。
+- 图表增强：新增并引用 `demand_eda_dashboard.png`、`forecast_heatmap.png`、`vehicle_allocation_profit_panel.png`、`dispatch_mechanism.png`、`base_location_comparison.png`，正文图片引用增至16处，并在关键图后补充“分析：”段落。
+- 排版修订：加入目录；在问题重述、问题分析、模型假设、符号说明、数据预处理及四个问题、模型评价、结论等大部分前加入分页；参考本地模板保持页眉页脚、图表标题和紧凑表格风格。
+- 表格修复：将“三基地选址方案对比”改为 `tabularx` 可换行紧凑表，数值四舍五入至两位百分比，避免超出页面。
+- 检查：LaTeX 结构检查通过，14个 figure、7个 table、16处图片引用均完整；相关 pytest 6项通过；`git diff --check` 无空白错误，仅提示 Windows 换行转换。

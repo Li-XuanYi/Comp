@@ -13,6 +13,7 @@
 \usepackage{titlesec}
 \usepackage{fancyhdr}
 \usepackage{lastpage}
+\usepackage{etoolbox}
 
 \geometry{left=25mm,right=25mm,top=25mm,bottom=25mm}
 \graphicspath{{figures/}}
@@ -22,6 +23,10 @@
 \setlist[enumerate]{leftmargin=2.8em,itemsep=0.2em,topsep=0.2em}
 \hypersetup{colorlinks=true,linkcolor=black,citecolor=black,urlcolor=black}
 \captionsetup{font=small,labelfont=bf}
+\setlength{\tabcolsep}{4pt}
+\BeforeBeginEnvironment{tabular}{\small}
+\BeforeBeginEnvironment{tabularx}{\small}
+\renewcommand{\contentsname}{目录}
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[C]{纽约约租车调度决策}
@@ -50,6 +55,9 @@
 \keywords{约租车调度；需求预测；动态定价；车辆分配；$p$-中位模型；边际利润}
 \end{abstract}
 
+\clearpage
+\tableofcontents
+\clearpage
 
 \section{问题重述}
 纽约市出租汽车与礼车委员会（Taxi and Limousine Commission, TLC）监管的出行市场由传统出租车和约租车共同构成。黄车、绿车订单记录了较完整的上车时间、下车时间、起终点区域、行程距离和费用信息；FHV（For-Hire Vehicle）约租车订单则主要记录派车基地、上下车时间和起终点区域。平台希望在有限车辆资源下，利用历史出行数据判断未来需求分布，制定具有竞争力且满足利润约束的订单价格，并进一步优化车辆投放和基地布局。
@@ -64,6 +72,7 @@
 
 上述四个问题构成一条由“市场需求”到“运营决策”的链条：问题一提供区域小时需求，问题二提供订单收益参数，问题三将需求和收益转化为短期车辆配置，问题四进一步给出长期基地布局。因而，本文的建模重点不仅是分别求解四个问题，还要保证前一问的输出能够以明确变量形式进入后一问，使整套方案具备一致的业务含义。
 
+\clearpage
 \section{问题分析与总体思路}
 题目给出的数据具有明显的时空异质性和业务链条特征。黄车和绿车数据记录了较完整的上下车时间、区域、里程和费用，可用于刻画布鲁克林出租车需求的时空分布以及出租车参考价格；FHV数据只包含少量约租车订单及其起终点、时间和派车基地，样本量不足以单独训练稳定的需求和价格模型。因此，本文采用“出租车历史规律迁移到FHV决策”的思路：先用黄车、绿车刻画可观测市场，再把预测需求和价格收益转化为约租车平台的调度输入。
 
@@ -79,6 +88,7 @@
 在模型选择上，本文遵循“先可解释基准、后机器学习提升、再优化决策落地”的原则。需求预测部分同时建立历史均值基线和Poisson梯度提升模型，并通过验证集确定融合权重；定价部分不直接假定FHV价格，而是先学习出租车参考价，再加入成本和竞争约束；车辆分配部分采用逐车边际利润最大化，保证整数可行性；基地选址部分利用候选区域数量有限的特点进行穷举搜索，避免启发式算法带来的局部最优风险。该策略使各问题的输入输出关系清晰，便于复现和检验。
 
 
+\clearpage
 \section{模型假设}
 为保证模型可以在题目数据范围内闭合求解，本文作如下假设，并在后文模型评价中说明其影响：
 \begin{enumerate}
@@ -90,6 +100,7 @@
     \item 基地区域假设：基地选址结果表示TLC区域层面的服务布局，不等同于具体停车场或物业地块；实际实施时仍需在选中区域内筛选合法停车、充电和调度设施。
 \end{enumerate}
 
+\clearpage
 \section{符号说明}
 \begin{longtable}{p{0.22\textwidth}p{0.68\textwidth}}
 \caption{主要符号说明}\label{tab:symbols}\\
@@ -119,6 +130,7 @@ $B$ & 选中的3个基地区域集合 \\
 $\tau_{j i}$ & 从基地区域$j$到需求区域$i$的派车时间 \\
 \bottomrule
 \end{longtable}
+\clearpage
 \section{数据预处理与探索性分析}
 
 \subsection{数据来源与清洗}
@@ -140,6 +152,15 @@ FHV约租车 & 115 & 115 & 0 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{demand_eda_dashboard.png}
+    \caption{布鲁克林出租车需求的多维探索性分析}
+    \label{fig:demand_dashboard}
+\end{figure}
+
+分析：图\ref{fig:demand_dashboard}将空间分布、小时变化、区域集中度和工作日差异放在同一视图中。可以看到，需求既具有明显的空间集聚，又具有稳定的日内周期；高需求区域贡献了相当比例的订单，而低需求区域和零需求时段同时存在。该现象说明后续预测模型不能只做总体时间序列外推，而应采用区域--小时面板结构，并在模型中同时保留区域效应、时间效应和天气等外部扰动。
 
 \subsection{区域--小时需求面板}
 将清洗后的黄车和绿车订单按$(\text{区域},\text{小时})$聚合，得到完整的布鲁克林需求面板。布鲁克林共有61个TLC区域，2019年1月共有31天、744个小时，因此面板规模为$61\times744=45384$行。面板总订单量为276103，平均每个区域小时6.0837单，其中零需求区域小时为12123行。订单高峰小时为18时，总需求最高区域为Fort Greene，共22525单。
@@ -188,6 +209,7 @@ FHV约租车 & 115 & 115 & 0 \\
 \end{figure}
 
 
+\clearpage
 \section{问题一：订单需求预测模型}
 
 \subsection{建模目标与数据组织}
@@ -240,9 +262,21 @@ GBDT与基线融合 & 1.9167 & 3.6289 & 0.8500 \\
     \label{fig:validation}
 \end{figure}
 
+分析：图\ref{fig:validation}显示，融合模型能够跟随验证集总需求的主要峰谷变化，但在局部尖峰处仍有低估现象。这与出租车订单受临时活动、道路状态和天气突变影响有关。由于本文后续车辆分配更关注中午12时的区域需求规模，模型在MAE和RMSE上的改善可直接降低车辆投放量估计误差；而对少数尖峰的低估则在模型评价中作为短期冲击下的局限保留。
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.88\textwidth]{forecast_heatmap.png}
+    \caption{2019年2月1日布鲁克林分区逐小时需求预测热力图}
+    \label{fig:forecast_heatmap}
+\end{figure}
+
+分析：图\ref{fig:forecast_heatmap}给出了预测结果在“区域--小时”层面的展开。颜色较深的区域主要集中在核心商业区和交通活跃区，且中午前后与晚高峰附近保持较高强度。该图直观说明，车辆调度不能只依据全天总量，而应面向具体时段和区域做局部配置；这也是问题三选择中午12时作为单小时资源分配截面的原因。
+
 将模型用于2019年2月1日预测，得到61个区域、24个小时共1464条预测记录，全天总预测出租车出发需求为9785.92单。中午12时全布鲁克林预测需求为427.69单。本文在基准情形下取$\rho=1$，将其视为FHV平台可争取需求的上界输入；当实际市场份额低于该上界时，可用$D_i=\rho\hat y_{i,12}$对车辆规模和利润进行比例修正。
 
 
+\clearpage
 \section{问题二：约租车订单定价模型}
 
 \subsection{建模目标与参考价格思想}
@@ -306,6 +340,7 @@ FHV订单数 & 115 \\
 图\ref{fig:pricing_economics}表明，FHV定价整体低于出租车参考价，但仍高于估计成本，说明竞争折扣和成本底线同时起作用。该结果也解释了为什么后续车辆分配不能只看需求量，还必须结合分区利润：同样一辆车投向不同区域，其可完成订单数和单单利润可能不同，最终边际收益也不同。
 
 
+\clearpage
 \section{问题三：新增车辆区域分配模型}
 
 \subsection{建模目标与输入参数}
@@ -346,6 +381,15 @@ FHV订单数 & 115 \\
 
 \begin{figure}[H]
     \centering
+    \includegraphics[width=0.88\textwidth]{vehicle_allocation_profit_panel.png}
+    \caption{不同车辆规模下的服务覆盖与增量利润变化}
+    \label{fig:vehicle_allocation_profit_panel}
+\end{figure}
+
+分析：图\ref{fig:vehicle_allocation_profit_panel}从服务需求、增量收入和增量利润三个维度展示车辆规模的边际变化。新增车辆由50辆增至100辆时，服务需求和利润同步提高；当车辆数继续增至200辆时，虽然仍有利润增长，但增长幅度已经收窄，并出现备用车辆。这说明平台在制定投放规模时应关注边际收益，而不是机械追求“车辆越多越好”。
+
+\begin{figure}[H]
+    \centering
     \includegraphics[width=0.72\textwidth]{vehicle_allocation_map.png}
     \caption{$N=100$时布鲁克林新增车辆空间分配}
     \label{fig:vehicle_allocation}
@@ -361,6 +405,7 @@ FHV订单数 & 115 \\
 图\ref{fig:vehicle_allocation}显示，车辆主要投向Downtown Brooklyn/MetroTech、Brooklyn Heights、Boerum Hill、Fort Greene等需求密集且利润较高的区域。图\ref{fig:vehicle_profit_sensitivity}进一步说明，车辆规模从25辆增加到150辆时增量利润增长较快；当车辆数接近200辆后，预测需求基本被覆盖，继续增加车辆只会形成备用运力，边际收益趋于零。这一结果提示平台不宜只追求车辆数量扩张，而应根据需求饱和点设置合理备用规模。
 
 
+\clearpage
 \section{问题四：三基地选址模型}
 
 \subsection{建模目标与权重设计}
@@ -369,6 +414,15 @@ FHV订单数 & 115 \\
     w_i=D_i\bar\pi_i,
 \end{equation}
 其中$D_i$为中午潜在可争取需求，$\bar\pi_i$为区域平均利润。
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.88\textwidth]{dispatch_mechanism.png}
+    \caption{特殊车型基地出发式调度机制}
+    \label{fig:dispatch_mechanism}
+\end{figure}
+
+分析：图\ref{fig:dispatch_mechanism}强调了特殊车型与普通巡游式车辆的差异：车辆从基地出发，服务高价值需求区，完成订单后再进入下一轮调度。因此，基地选址的核心不只是贴近订单量最高的区域，还要降低高利润需求点的接驾时间。该业务机制决定了问题四应采用“业务价值权重$\times$派车时间”的设施选址目标。
 
 \subsection{业务价值加权$p$-中位模型}
 令$B$为选中的基地区域集合，$|B|=3$；令$\tau_{ji}$表示从候选基地区域$j$到需求区域$i$的估计派车时间。由于车辆从基地出发前往需求区，派车时间方向应为“基地到需求区”，因此选址模型为
@@ -388,17 +442,27 @@ FHV订单数 & 115 \\
 \centering
 \caption{三基地选址方案对比}
 \label{tab:q4_summary}
-\begin{tabularx}{\textwidth}{lXrr}
+\scriptsize
+\begin{tabularx}{\textwidth}{p{0.15\textwidth}X>{\raggedleft\arraybackslash}p{0.17\textwidth}>{\raggedleft\arraybackslash}p{0.15\textwidth}}
 \toprule
 方案 & 基地区域 & 加权派车时间目标值 & 相对需求Top3改善 \\
 \midrule
-最优$p$-中位 & 33 Brooklyn Heights；111 Green-Wood Cemetery；222 Starrett City & 26190.96 & 27.999\% \\
-需求Top3 & 33 Brooklyn Heights；65 Downtown Brooklyn/MetroTech；97 Fort Greene & 36375.70 & 0 \\
-地理KMeans & 35 Brownsville；97 Fort Greene；178 Ocean Parkway South & 31460.55 & 13.512\% \\
-随机方案（固定种子示例） & 21 Bensonhurst East；150 Manhattan Beach；228 Sunset Park West & 58924.00 & -61.987\% \\
+最优$p$-中位 & 33 Brooklyn Heights；111 Green-Wood Cemetery；222 Starrett City & 26190.96 & 28.00\% \\
+需求Top3 & 33 Brooklyn Heights；65 Downtown Brooklyn/MetroTech；97 Fort Greene & 36375.70 & 0.00\% \\
+地理KMeans & 35 Brownsville；97 Fort Greene；178 Ocean Parkway South & 31460.55 & 13.51\% \\
+随机方案（固定种子示例） & 21 Bensonhurst East；150 Manhattan Beach；228 Sunset Park West & 58924.00 & -61.99\% \\
 \bottomrule
 \end{tabularx}
 \end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.86\textwidth]{base_location_comparison.png}
+    \caption{三基地候选方案目标值对比}
+    \label{fig:base_location_comparison}
+\end{figure}
+
+分析：图\ref{fig:base_location_comparison}显示，业务价值加权$p$-中位方案明显优于需求Top3、地理KMeans和随机方案。需求Top3虽然覆盖核心区，但三个基地过于集中；随机方案由于忽视需求和利润权重，目标值最高；KMeans改善了空间分散性，但没有显式考虑高价值订单。由此可见，将需求和利润共同纳入权重是提高特殊车型基地覆盖效率的关键。
 
 \begin{figure}[H]
     \centering
@@ -410,6 +474,7 @@ FHV订单数 & 115 \\
 表中目标函数值的单位可理解为“利润权重$\times$分钟”的相对指标，用于比较不同基地组合的派车效率，并非直接美元成本。需要说明的是，Green-Wood Cemetery和Starrett City等名称代表TLC分区，不意味着基地必须设在墓园或住宅内部。实际落地时，应在对应TLC区域内进一步筛选可停车、可充电、可调度的合法物业或路外停车设施。换言之，本文给出的是区域层面的基地布局决策，而不是具体地块选址。
 
 
+\clearpage
 \section{灵敏度分析与模型评价}
 
 \subsection{灵敏度分析}
@@ -460,6 +525,7 @@ $\rho$ & 中午潜在需求/单 & 饱和所需车辆数 & 利润上界/美元 \\
 模型的不足主要来自数据粒度和静态假设。首先，需求预测只基于2019年1月一个月数据，难以充分刻画跨月季节性、重大活动和极端天气影响；其次，FHV样本仅115条，本文实质上是将出租车参考价格迁移到FHV定价，且部分区域收益参数需要回填，若获得更大规模FHV成交价，可进一步训练平台专属价格模型；再次，车辆分配模型是单小时静态上界模型，未考虑接驾时间、乘客等待、车辆完成订单后的空间再分布和司机接单行为；最后，基地选址只到TLC区域层级，实际建设还需结合停车、充电、租金、法规和换班便利性进行微观选址。上述不足限制了结果向真实平台直接推广，但不影响在题目给定数据和假设下形成可解释的定量方案。
 
 
+\clearpage
 \section{结论}
 本文围绕纽约约租车平台在布鲁克林区域的运营决策问题，建立了从需求预测到基地选址的闭环模型。针对问题一，本文构造区域--小时需求面板，采用Poisson梯度提升模型与历史基线融合预测2019年2月1日需求，验证集MAE为1.9167，优于最优历史基线。针对问题二，本文以出租车历史费用为参考，结合成本底线和竞争折扣为115条FHV订单定价，平均价格为15.96美元，平均成本口径利润率为56.18\%。针对问题三，本文将中午预测需求、分区利润和单车服务能力结合，采用边际利润排序方法分配新增车辆；当$N=100$时预计增量利润为2183.85美元，当$N=200$时176辆车即可覆盖全部预测需求。针对问题四，本文建立业务价值加权$p$-中位模型，选出Brooklyn Heights、Green-Wood Cemetery所在TLC分区和Starrett City所在TLC分区作为三处基地区域，相比需求Top3方案，加权派车时间目标值降低约28.00\%。
 
