@@ -33,3 +33,5 @@ node_outputs:
   node04_hourly_features: "data/processed/hourly_features.parquet"
   node04_feature_summary: "outputs/tables/node04_feature_summary.csv"
   node05_eda_summary: "outputs/tables/node05_eda_summary.csv"
+  node06_baseline_metrics: "outputs/tables/node06_baseline_metrics.csv"
+  node06_baseline_validation_predictions: "outputs/tables/node06_baseline_validation_predictions.csv"

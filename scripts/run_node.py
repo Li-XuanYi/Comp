@@ -69,6 +69,13 @@ def run_node05() -> None:
     print("node05 EDA summary written to {}".format(destination))
 
 
+def run_node06() -> None:
+    from src.demand_baseline import write_baseline_outputs
+
+    destination = write_baseline_outputs()
+    print("node06 baseline metrics written to {}".format(destination))
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run a modeling node.")
     parser.add_argument("--node", required=True, help="Node id, for example node00.")
@@ -95,6 +102,9 @@ def main() -> int:
         return 0
     if node == "node05":
         run_node05()
+        return 0
+    if node == "node06":
+        run_node06()
         return 0
     raise SystemExit(
         "{} is not implemented yet. Complete nodes sequentially.".format(args.node)

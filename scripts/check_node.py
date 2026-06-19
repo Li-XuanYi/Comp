@@ -274,6 +274,30 @@ def check_node05() -> List[str]:
     return failures
 
 
+def check_node06() -> List[str]:
+    failures = []
+    metrics_path = PROJECT_ROOT / "outputs" / "tables" / "node06_baseline_metrics.csv"
+    pred_path = PROJECT_ROOT / "outputs" / "tables" / "node06_baseline_validation_predictions.csv"
+    for path in [metrics_path, pred_path]:
+        if not path.exists():
+            failures.append("missing: {}".format(path.relative_to(PROJECT_ROOT)))
+    if failures:
+        return failures
+    metrics = pd.read_csv(metrics_path)
+    required_metrics = {"MAE", "RMSE", "SMAPE"}
+    missing = required_metrics - set(metrics.columns)
+    if missing:
+        failures.append("missing metric columns: {}".format(", ".join(sorted(missing))))
+    elif metrics[list(required_metrics)].isna().any().any():
+        failures.append("baseline metrics contain missing values")
+    if len(metrics) < 3:
+        failures.append("expected at least three baselines")
+    predictions = pd.read_csv(pred_path)
+    if predictions.empty:
+        failures.append("validation predictions are empty")
+    return failures
+
+
 CHECKS: Dict[str, Callable[[], List[str]]] = {
     "node00": check_node00,
     "node01": check_node01,
@@ -281,6 +305,7 @@ CHECKS: Dict[str, Callable[[], List[str]]] = {
     "node03": check_node03,
     "node04": check_node04,
     "node05": check_node05,
+    "node06": check_node06,
 }
 
 
