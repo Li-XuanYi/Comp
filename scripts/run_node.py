@@ -90,6 +90,13 @@ def run_node08() -> None:
     print("node08 OD reference written to {}".format(destination))
 
 
+def run_node09() -> None:
+    from src.pricing_model import write_pricing_outputs
+
+    destination = write_pricing_outputs()
+    print("node09 FHV pricing written to {}".format(destination))
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run a modeling node.")
     parser.add_argument("--node", required=True, help="Node id, for example node00.")
@@ -125,6 +132,9 @@ def main() -> int:
         return 0
     if node == "node08":
         run_node08()
+        return 0
+    if node == "node09":
+        run_node09()
         return 0
     raise SystemExit(
         "{} is not implemented yet. Complete nodes sequentially.".format(args.node)

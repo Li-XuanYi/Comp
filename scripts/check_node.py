@@ -349,6 +349,31 @@ def check_node08() -> List[str]:
     return failures
 
 
+def check_node09() -> List[str]:
+    failures = []
+    result_path = PROJECT_ROOT / "outputs" / "tables" / "fhv_pricing_results.csv"
+    summary_path = PROJECT_ROOT / "outputs" / "tables" / "node09_pricing_model_summary.csv"
+    for path in [result_path, summary_path]:
+        if not path.exists():
+            failures.append("missing: {}".format(path.relative_to(PROJECT_ROOT)))
+    if failures:
+        return failures
+    result = pd.read_csv(result_path)
+    required = {"fhv_price", "taxi_reference_price", "estimated_cost", "estimated_profit"}
+    missing = required - set(result.columns)
+    if missing:
+        failures.append("missing pricing columns: {}".format(", ".join(sorted(missing))))
+        return failures
+    if result[list(required)].isna().any().any():
+        failures.append("pricing result has key missing values")
+    if not result["fhv_price"].gt(0).all():
+        failures.append("fhv_price must be positive")
+    fhv_distance = PROJECT_ROOT / "outputs" / "tables" / "fhv_with_estimated_distance.csv"
+    if fhv_distance.exists() and len(result) != len(pd.read_csv(fhv_distance)):
+        failures.append("pricing row count does not match FHV input")
+    return failures
+
+
 CHECKS: Dict[str, Callable[[], List[str]]] = {
     "node00": check_node00,
     "node01": check_node01,
@@ -359,6 +384,7 @@ CHECKS: Dict[str, Callable[[], List[str]]] = {
     "node06": check_node06,
     "node07": check_node07,
     "node08": check_node08,
+    "node09": check_node09,
 }
 
 

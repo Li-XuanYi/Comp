@@ -39,3 +39,5 @@ node_outputs:
   node07_prediction: "outputs/tables/pred_demand_2019_02_01_hourly.csv"
   node08_od_reference: "outputs/tables/od_distance_duration_reference.csv"
   node08_fhv_distance: "outputs/tables/fhv_with_estimated_distance.csv"
+  node09_fhv_pricing: "outputs/tables/fhv_pricing_results.csv"
+  node09_pricing_summary: "outputs/tables/node09_pricing_model_summary.csv"
