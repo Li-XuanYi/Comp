@@ -214,11 +214,49 @@ def check_node03() -> List[str]:
     return failures
 
 
+def check_node04() -> List[str]:
+    failures = []
+    feature_path = PROJECT_ROOT / "data" / "processed" / "hourly_features.parquet"
+    summary_path = PROJECT_ROOT / "outputs" / "tables" / "node04_feature_summary.csv"
+    weather_path = PROJECT_ROOT / "data" / "external" / "weather_hourly.csv"
+    for path in [feature_path, summary_path, weather_path]:
+        if not path.exists():
+            failures.append("missing: {}".format(path.relative_to(PROJECT_ROOT)))
+    if failures:
+        return failures
+    features = pd.read_parquet(feature_path)
+    required = {
+        "temperature",
+        "precipitation",
+        "snow_indicator",
+        "wind_speed",
+        "visibility",
+        "is_weekend",
+        "is_holiday",
+        "is_morning_peak",
+        "is_evening_peak",
+        "is_night",
+        "hour_sin",
+        "hour_cos",
+        "weekday",
+        "month",
+        "day",
+    }
+    missing = required - set(features.columns)
+    if missing:
+        failures.append("missing feature columns: {}".format(", ".join(sorted(missing))))
+    key_missing = features[list(required)].isna().mean().max()
+    if key_missing > 0:
+        failures.append("key feature missing rate is {}".format(key_missing))
+    return failures
+
+
 CHECKS: Dict[str, Callable[[], List[str]]] = {
     "node00": check_node00,
     "node01": check_node01,
     "node02": check_node02,
     "node03": check_node03,
+    "node04": check_node04,
 }
 
 

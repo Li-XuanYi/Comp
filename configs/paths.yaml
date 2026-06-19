@@ -29,3 +29,6 @@ node_outputs:
   node02_cleaning_report: "outputs/tables/node02_cleaning_report.csv"
   node03_demand_panel: "data/processed/hourly_demand_panel.parquet"
   node03_demand_panel_summary: "outputs/tables/node03_demand_panel_summary.csv"
+  node04_weather_hourly: "data/external/weather_hourly.csv"
+  node04_hourly_features: "data/processed/hourly_features.parquet"
+  node04_feature_summary: "outputs/tables/node04_feature_summary.csv"

@@ -55,6 +55,13 @@ def run_node03() -> None:
     print("node03 demand panel written to {}".format(destination))
 
 
+def run_node04() -> None:
+    from src.weather_calendar import write_hourly_features
+
+    destination = write_hourly_features()
+    print("node04 hourly features written to {}".format(destination))
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run a modeling node.")
     parser.add_argument("--node", required=True, help="Node id, for example node00.")
@@ -75,6 +82,9 @@ def main() -> int:
         return 0
     if node == "node03":
         run_node03()
+        return 0
+    if node == "node04":
+        run_node04()
         return 0
     raise SystemExit(
         "{} is not implemented yet. Complete nodes sequentially.".format(args.node)

@@ -1,0 +1,2 @@
+﻿n_rows,n_cols,datetime_min,datetime_max,max_missing_rate,weather_source
+45384,25,2019-01-01,2019-01-31 23:00:00,0.0,synthetic_template
