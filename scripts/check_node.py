@@ -401,6 +401,32 @@ def check_node10() -> List[str]:
     return failures
 
 
+def check_node11() -> List[str]:
+    failures = []
+    result_path = PROJECT_ROOT / "outputs" / "tables" / "base_location_results.csv"
+    assignment_path = PROJECT_ROOT / "outputs" / "tables" / "base_location_assignment.csv"
+    fig_path = PROJECT_ROOT / "outputs" / "figures" / "base_location_map.png"
+    for path in [result_path, assignment_path, fig_path]:
+        if not path.exists():
+            failures.append("missing: {}".format(path.relative_to(PROJECT_ROOT)))
+    if failures:
+        return failures
+    result = pd.read_csv(result_path)
+    optimal = result[result["scenario"] == "optimal_p_median"]
+    if len(optimal) != 1:
+        failures.append("expected one optimal_p_median row")
+    else:
+        bases = str(optimal.iloc[0]["base_zone_ids"]).split(";")
+        if len(bases) != 3:
+            failures.append("optimal scenario does not contain exactly 3 bases")
+    assignment = pd.read_csv(assignment_path)
+    if assignment["assigned_base_id"].nunique() != 3:
+        failures.append("assignment does not use exactly 3 bases")
+    if fig_path.stat().st_size <= 0:
+        failures.append("base location figure is empty")
+    return failures
+
+
 CHECKS: Dict[str, Callable[[], List[str]]] = {
     "node00": check_node00,
     "node01": check_node01,
@@ -413,6 +439,7 @@ CHECKS: Dict[str, Callable[[], List[str]]] = {
     "node08": check_node08,
     "node09": check_node09,
     "node10": check_node10,
+    "node11": check_node11,
 }
 
 

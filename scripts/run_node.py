@@ -104,6 +104,13 @@ def run_node10() -> None:
     print("node10 vehicle allocation written to {}".format(destination))
 
 
+def run_node11() -> None:
+    from src.base_location import write_base_location_outputs
+
+    destination = write_base_location_outputs()
+    print("node11 base location results written to {}".format(destination))
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run a modeling node.")
     parser.add_argument("--node", required=True, help="Node id, for example node00.")
@@ -145,6 +152,9 @@ def main() -> int:
         return 0
     if node == "node10":
         run_node10()
+        return 0
+    if node == "node11":
+        run_node11()
         return 0
     raise SystemExit(
         "{} is not implemented yet. Complete nodes sequentially.".format(args.node)

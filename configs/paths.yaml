@@ -43,3 +43,5 @@ node_outputs:
   node09_pricing_summary: "outputs/tables/node09_pricing_model_summary.csv"
   node10_vehicle_allocation: "outputs/tables/vehicle_allocation_12pm.csv"
   node10_revenue_gain_summary: "outputs/tables/node10_revenue_gain_summary.csv"
+  node11_base_results: "outputs/tables/base_location_results.csv"
+  node11_base_assignment: "outputs/tables/base_location_assignment.csv"
