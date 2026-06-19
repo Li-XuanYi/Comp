@@ -21,7 +21,7 @@ from src.od_estimation import load_zone_centroids
 def weighted_assignment_cost(
     time_matrix: pd.DataFrame, demand_zones: Sequence[int], weights: np.ndarray, bases: Sequence[int]
 ) -> Tuple[float, np.ndarray]:
-    sub = time_matrix.loc[list(demand_zones), list(bases)].to_numpy(dtype=float)
+    sub = time_matrix.loc[list(bases), list(demand_zones)].T.to_numpy(dtype=float)
     nearest_idx = np.argmin(sub, axis=1)
     nearest_time = sub[np.arange(len(demand_zones)), nearest_idx]
     return float(np.sum(weights * nearest_time)), nearest_idx
@@ -115,7 +115,7 @@ def optimize_base_locations(paths: Dict = None):
     assignment["assigned_base_id"] = [optimal_bases[idx] for idx in nearest_idx]
     assignment["assigned_base_name"] = assignment["assigned_base_id"].map(zone_names)
     assignment["dispatch_time_min"] = [
-        time_matrix.loc[zone, base]
+        time_matrix.loc[base, zone]
         for zone, base in zip(assignment["zone_id"], assignment["assigned_base_id"])
     ]
     return result, assignment

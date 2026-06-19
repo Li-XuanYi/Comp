@@ -14,3 +14,14 @@ def test_weighted_assignment_cost_uses_nearest_base():
     assert cost == 3
     assert list(idx) == [0, 1, 1]
 
+
+
+def test_weighted_assignment_cost_uses_base_to_demand_direction():
+    matrix = pd.DataFrame(
+        [[0, 1, 100], [50, 0, 100], [1, 100, 0]],
+        index=[1, 2, 3],
+        columns=[1, 2, 3],
+    )
+    cost, idx = weighted_assignment_cost(matrix, [1, 2], np.array([1, 1]), [1, 3])
+    assert cost == 1
+    assert list(idx) == [0, 0]

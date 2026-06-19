@@ -385,21 +385,37 @@ def check_node10() -> List[str]:
     if failures:
         return failures
     allocation = pd.read_csv(allocation_path)
+    summary = pd.read_csv(summary_path)
     for count in [50, 100, 200]:
         column = "vehicles_N{}".format(count)
         if column not in allocation.columns:
             failures.append("missing allocation column {}".format(column))
             continue
-        if int(allocation[column].sum()) != count:
-            failures.append("{} sums to {}, expected {}".format(column, allocation[column].sum(), count))
+        allocated = int(allocation[column].sum())
+        if allocated > count:
+            failures.append("{} allocates {}, exceeding {}".format(column, allocated, count))
         if allocation[column].lt(0).any():
             failures.append("{} has negative vehicles".format(column))
         if not (allocation[column] == allocation[column].astype(int)).all():
             failures.append("{} has non-integer vehicles".format(column))
+        row = summary.loc[summary["vehicle_count"] == count]
+        if row.empty:
+            failures.append("summary missing vehicle_count {}".format(count))
+            continue
+        required_summary = {"allocated_vehicles", "idle_vehicles"}
+        if not required_summary.issubset(summary.columns):
+            failures.append("allocation summary missing idle vehicle columns")
+            continue
+        total = int(row.iloc[0]["allocated_vehicles"]) + int(row.iloc[0]["idle_vehicles"])
+        if total != count:
+            failures.append(
+                "allocated plus idle vehicles sums to {}, expected {}".format(total, count)
+            )
+        if int(row.iloc[0]["allocated_vehicles"]) != allocated:
+            failures.append("summary allocated vehicles mismatch for N={}".format(count))
     if fig_path.stat().st_size <= 0:
         failures.append("vehicle allocation figure is empty")
     return failures
-
 
 def check_node11() -> List[str]:
     failures = []

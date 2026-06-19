@@ -1,5 +1,5 @@
 ﻿scenario,base_zone_ids,base_zone_names,weighted_dispatch_time_cost,improvement_vs_top_demand_pct
-optimal_p_median,65;111;222,Downtown Brooklyn/MetroTech;Green-Wood Cemetery;Starrett City,26382.41844106002,0.3231573857944056
-top_demand_3,33;65;97,Brooklyn Heights;Downtown Brooklyn/MetroTech;Fort Greene,38978.660455687896,0.0
-random_3,21;150;228,Bensonhurst East;Manhattan Beach;Sunset Park West,49031.48608640542,-0.2579058775543577
-geographic_kmeans_3,35;97;178,Brownsville;Fort Greene;Ocean Parkway South,31673.913131755056,0.1874037547349041
+optimal_p_median,33;111;222,Brooklyn Heights;Green-Wood Cemetery;Starrett City,26190.95662838222,0.2799876443666033
+top_demand_3,33;65;97,Brooklyn Heights;Downtown Brooklyn/MetroTech;Fort Greene,36375.704421547,0.0
+random_3,21;150;228,Bensonhurst East;Manhattan Beach;Sunset Park West,58923.99860728905,-0.6198723720766123
+geographic_kmeans_3,35;97;178,Brownsville;Fort Greene;Ocean Parkway South,31460.551480420396,0.1351218627731958

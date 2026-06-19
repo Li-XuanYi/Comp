@@ -1,4 +1,4 @@
-﻿vehicle_count,estimated_incremental_revenue,estimated_incremental_profit,top_zone_id,top_zone_name
-50,3248.2731879370713,1283.5085190702325,65,Downtown Brooklyn/MetroTech
-100,5625.41346321155,2183.851888386337,33,Brooklyn Heights
-200,7645.048991929955,2867.9296037136164,33,Brooklyn Heights
+﻿vehicle_count,allocated_vehicles,idle_vehicles,served_demand,total_predicted_demand_12pm,estimated_incremental_revenue,estimated_incremental_profit,top_zone_id,top_zone_name
+50,50,0,190.79086424575638,427.69367384133085,3248.2731879370713,1283.5085190702325,65,Downtown Brooklyn/MetroTech
+100,100,0,294.92419435408914,427.69367384133085,5625.41346321155,2183.851888386337,33,Brooklyn Heights
+200,176,24,427.69367384133085,427.69367384133085,7645.048991929955,2867.9296037136164,33,Brooklyn Heights

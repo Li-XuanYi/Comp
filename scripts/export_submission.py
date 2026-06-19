@@ -80,6 +80,10 @@ def build_model_summary(paths) -> str:
                     node10_summary["vehicle_count"] == 100, "estimated_incremental_profit"
                 ].iloc[0]
             ),
+            "When predicted noon demand is fully covered, remaining vehicles are held idle/reserve; for N=200, {} vehicles are allocated and {} remain idle.".format(
+                int(node10_summary.loc[node10_summary["vehicle_count"] == 200, "allocated_vehicles"].iloc[0]),
+                int(node10_summary.loc[node10_summary["vehicle_count"] == 200, "idle_vehicles"].iloc[0]),
+            ),
             "",
             "## Question 4: Three Base Locations",
             "Model: Exhaustive weighted p-median over Brooklyn zone triples.",

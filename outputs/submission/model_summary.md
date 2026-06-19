@@ -14,11 +14,12 @@ Average FHV price: 15.96; average estimated profit rate: 56.18%.
 Model: Greedy integer allocation by marginal profit, demand, and service capacity.
 Output: q3_vehicle_allocation.xlsx with N=50, 100, and 200 vehicle plans.
 Estimated incremental profit for N=100: 2183.85.
+When predicted noon demand is fully covered, remaining vehicles are held idle/reserve; for N=200, 176 vehicles are allocated and 24 remain idle.
 
 ## Question 4: Three Base Locations
 Model: Exhaustive weighted p-median over Brooklyn zone triples.
 Output: q4_base_location.xlsx with selected bases and zone assignments.
-Optimal base zones: 65;111;222 (Downtown Brooklyn/MetroTech;Green-Wood Cemetery;Starrett City) with weighted dispatch-time cost 26382.42.
+Optimal base zones: 33;111;222 (Brooklyn Heights;Green-Wood Cemetery;Starrett City) with weighted dispatch-time cost 26190.96.
 Feasibility note: zone-level base IDs identify service areas; the final physical depot should be placed on feasible parking or dispatch property inside the selected TLC zone.
 
 ## Sensitivity Analysis
