@@ -1,15 +1,15 @@
 project_root: "."
 
 raw_inputs:
-  problem_pdf: "B题：纽约约租车调度决策.pdf"
-  yellow_tripdata: "附件1-yellow_tripdata_2019-01-new.xlsx"
-  green_tripdata: "附件2-green_tripdata_2019-01-new.xlsx"
-  fhv_tripdata: "附件3-fhv_tripdata_2019-01-new.xlsx"
-  yellow_dictionary: "附件4-data_dictionary_trip_records_yellow.pdf"
-  green_dictionary: "附件5-data_dictionary_trip_records_green.pdf"
-  fhv_dictionary: "附件6-data_dictionary_trip_records_fhv.pdf"
-  taxi_zone_lookup: "附件7-map/taxi+_zone_lookup.csv"
-  taxi_zones_shp: "附件7-map/taxi_zones/taxi_zones.shp"
+  problem_pdf: "B*.pdf"
+  yellow_tripdata: "*yellow_tripdata_2019-01-new.xlsx"
+  green_tripdata: "*green_tripdata_2019-01-new.xlsx"
+  fhv_tripdata: "*fhv_tripdata_2019-01-new.xlsx"
+  yellow_dictionary: "*data_dictionary_trip_records_yellow.pdf"
+  green_dictionary: "*data_dictionary_trip_records_green.pdf"
+  fhv_dictionary: "*data_dictionary_trip_records_fhv.pdf"
+  taxi_zone_lookup: "*/taxi+_zone_lookup.csv"
+  taxi_zones_shp: "*/taxi_zones/taxi_zones.shp"
 
 data:
   raw: "data/raw"
@@ -24,3 +24,5 @@ outputs:
   logs: "outputs/logs"
   submission: "outputs/submission"
 
+node_outputs:
+  node01_data_audit: "outputs/tables/node01_data_audit.csv"

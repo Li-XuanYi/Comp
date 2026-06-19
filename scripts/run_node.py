@@ -6,9 +6,11 @@ implementation when they are reached.
 
 import argparse
 from pathlib import Path
+import sys
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
 
 
 def run_node00() -> None:
@@ -32,6 +34,13 @@ def run_node00() -> None:
     print("node00 scaffold directories are present")
 
 
+def run_node01() -> None:
+    from src.io_utils import write_data_audit
+
+    destination = write_data_audit()
+    print("node01 data audit written to {}".format(destination))
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run a modeling node.")
     parser.add_argument("--node", required=True, help="Node id, for example node00.")
@@ -44,6 +53,9 @@ def main() -> int:
     if node == "node00":
         run_node00()
         return 0
+    if node == "node01":
+        run_node01()
+        return 0
     raise SystemExit(
         "{} is not implemented yet. Complete nodes sequentially.".format(args.node)
     )
@@ -51,4 +63,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

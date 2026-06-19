@@ -4,6 +4,13 @@ from typing import Dict, List
 
 
 RAW_DATASETS: List[str] = ["yellow", "green", "fhv"]
+NODE01_DATASETS: List[str] = [
+    "yellow",
+    "green",
+    "fhv",
+    "taxi_zone_lookup",
+    "taxi_zones_shp",
+]
 
 RAW_INPUT_KEYS: Dict[str, str] = {
     "yellow": "yellow_tripdata",
@@ -26,4 +33,14 @@ REQUIRED_NODE00_PATHS: List[str] = [
     "scripts/run_node.py",
     "pytest.ini",
     "tests/test_schema.py",
+]
+
+NODE01_AUDIT_COLUMNS: List[str] = [
+    "dataset",
+    "n_rows",
+    "n_cols",
+    "columns",
+    "missing_rate_summary",
+    "datetime_min",
+    "datetime_max",
 ]
