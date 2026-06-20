@@ -136,7 +136,7 @@ def price_fhv_orders(paths: Dict = None) -> Tuple[pd.DataFrame, pd.DataFrame]:
     fhv_price = np.maximum(price_floor, competitive_price)
     shared_mask = fhv["SR_Flag"].fillna(0).astype(float).eq(1)
     fhv_price = np.where(shared_mask, fhv_price * shared_factor, fhv_price)
-    fhv_price = np.maximum(fhv_price, price_floor * 0.95)
+    fhv_price = np.maximum(fhv_price, price_floor)
 
     result = fhv.copy()
     result["taxi_reference_price"] = taxi_reference

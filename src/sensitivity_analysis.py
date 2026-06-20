@@ -21,7 +21,7 @@ def pricing_parameter_sensitivity(paths: Dict = None) -> pd.DataFrame:
             price = np.maximum(price_floor, competitive)
             shared_mask = pricing["SR_Flag"].fillna(0).astype(float).eq(1)
             price = np.where(shared_mask, price * 0.90, price)
-            price = np.maximum(price, price_floor * 0.95)
+            price = np.maximum(price, price_floor)
             profit_rate = (price - pricing["estimated_cost"]) / pricing["estimated_cost"]
             rows.append(
                 {

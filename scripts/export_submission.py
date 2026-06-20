@@ -68,7 +68,7 @@ def build_model_summary(paths) -> str:
             "## Question 2: FHV Pricing",
             "Model: Taxi reference price regression plus cost floor and minimum-profit constraint.",
             "Output: q2_fhv_pricing.xlsx with {} priced FHV orders.".format(len(q2)),
-            "Average FHV price: {:.2f}; average estimated profit rate: {:.2%}.".format(
+            "Average FHV price: {:.2f}; average cost-based profit rate: {:.2%}.".format(
                 node09_summary["avg_fhv_price"], node09_summary["avg_estimated_profit_rate"]
             ),
             "",
@@ -80,11 +80,15 @@ def build_model_summary(paths) -> str:
                     node10_summary["vehicle_count"] == 100, "estimated_incremental_profit"
                 ].iloc[0]
             ),
+            "When predicted noon demand is fully covered, remaining vehicles are held idle/reserve; for N=200, {} vehicles are allocated and {} remain idle.".format(
+                int(node10_summary.loc[node10_summary["vehicle_count"] == 200, "allocated_vehicles"].iloc[0]),
+                int(node10_summary.loc[node10_summary["vehicle_count"] == 200, "idle_vehicles"].iloc[0]),
+            ),
             "",
             "## Question 4: Three Base Locations",
             "Model: Exhaustive weighted p-median over Brooklyn zone triples.",
             "Output: q4_base_location.xlsx with selected bases and zone assignments.",
-            "Optimal base zones: {} ({}) with weighted dispatch-time cost {:.2f}.".format(
+            "Optimal base zones: {} ({}) with business-value-weighted dispatch time {:.2f}.".format(
                 optimal["base_zone_ids"],
                 optimal["base_zone_names"],
                 optimal["weighted_dispatch_time_cost"],
@@ -100,7 +104,7 @@ def build_model_summary(paths) -> str:
             "## Assumptions",
             "- Weather features use Open-Meteo historical hourly reanalysis for Brooklyn when network access is available, with a deterministic template fallback for reproducibility.",
             "- OD pairs with insufficient taxi samples use centroid-distance fallback calibrated by historical average speed.",
-            "- Vehicle counts are parameterized as 50, 100, and 200 because the problem statement does not fix an added fleet size.",
+            "- The baseline vehicle allocation treats taxi-origin demand as an upper-bound proxy for FHV-addressable demand; use rho < 1 for lower platform penetration.",
             "",
         ]
     )

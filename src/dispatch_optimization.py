@@ -25,7 +25,9 @@ def zone_profit_service(pricing: pd.DataFrame) -> pd.DataFrame:
     return grouped.reset_index().rename(columns={"PULocationID": "zone_id"})
 
 
-def allocate_greedy(zones: pd.DataFrame, total_vehicles: int) -> Tuple[np.ndarray, float, float]:
+def allocate_greedy(
+    zones: pd.DataFrame, total_vehicles: int
+) -> Tuple[np.ndarray, float, float, int, float]:
     vehicles = np.zeros(len(zones), dtype=int)
     served = np.zeros(len(zones), dtype=float)
     demand = zones["predicted_demand_12pm"].to_numpy(dtype=float)
@@ -33,18 +35,23 @@ def allocate_greedy(zones: pd.DataFrame, total_vehicles: int) -> Tuple[np.ndarra
     revenue = zones["avg_revenue"].to_numpy(dtype=float)
     capacity = 60.0 / zones["avg_service_time"].clip(lower=3).to_numpy(dtype=float)
 
+    used_vehicles = 0
     for _ in range(total_vehicles):
         remaining = np.maximum(demand - served, 0)
         marginal_served = np.minimum(capacity, remaining)
         marginal_profit = marginal_served * profit
+        if float(np.max(marginal_profit)) <= 0:
+            break
         idx = int(np.argmax(marginal_profit))
         vehicles[idx] += 1
         served[idx] += marginal_served[idx]
+        used_vehicles += 1
 
     total_profit = float(np.sum(np.minimum(served, demand) * profit))
     total_revenue = float(np.sum(np.minimum(served, demand) * revenue))
-    return vehicles, total_revenue, total_profit
-
+    served_demand = float(np.sum(np.minimum(served, demand)))
+    idle_vehicles = int(total_vehicles - used_vehicles)
+    return vehicles, total_revenue, total_profit, idle_vehicles, served_demand
 
 def plot_allocation_map(allocation: pd.DataFrame, destination, paths: Dict = None) -> None:
     import shapefile  # type: ignore
@@ -99,18 +106,27 @@ def optimize_vehicle_allocation(paths: Dict = None, vehicle_counts: Iterable[int
 
     summary_rows = []
     for count in vehicle_counts:
-        vehicles, revenue, profit = allocate_greedy(allocation, int(count))
+        vehicles, revenue, profit, idle_vehicles, served_demand = allocate_greedy(
+            allocation, int(count)
+        )
         allocation["vehicles_N{}".format(count)] = vehicles
         summary_rows.append(
             {
                 "vehicle_count": int(count),
+                "allocated_vehicles": int(vehicles.sum()),
+                "idle_vehicles": idle_vehicles,
+                "served_demand": served_demand,
+                "total_predicted_demand_12pm": float(allocation["predicted_demand_12pm"].sum()),
                 "estimated_incremental_revenue": revenue,
                 "estimated_incremental_profit": profit,
-                "top_zone_id": int(allocation.iloc[int(np.argmax(vehicles))]["zone_id"]),
-                "top_zone_name": allocation.iloc[int(np.argmax(vehicles))]["zone_name"],
+                "top_zone_id": int(allocation.iloc[int(np.argmax(vehicles))]["zone_id"])
+                if int(vehicles.sum()) > 0
+                else "",
+                "top_zone_name": allocation.iloc[int(np.argmax(vehicles))]["zone_name"]
+                if int(vehicles.sum()) > 0
+                else "",
             }
         )
-
     keep = [
         "zone_id",
         "zone_name",
@@ -135,4 +151,3 @@ def write_dispatch_outputs(paths: Dict = None):
     fig_path = root / paths["outputs"]["figures"] / "vehicle_allocation_map.png"
     plot_allocation_map(allocation, fig_path, paths)
     return allocation_path
-
