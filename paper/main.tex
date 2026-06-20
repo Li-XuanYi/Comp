@@ -23,6 +23,10 @@
 \setlist[enumerate]{leftmargin=2.8em,itemsep=0.2em,topsep=0.2em}
 \hypersetup{colorlinks=true,linkcolor=black,citecolor=black,urlcolor=black}
 \captionsetup{font=small,labelfont=bf}
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\captionsetup{skip=4pt}
 \setlength{\tabcolsep}{4pt}
 \BeforeBeginEnvironment{tabular}{\small}
 \BeforeBeginEnvironment{tabularx}{\small}
@@ -283,7 +287,6 @@ GBDT与基线融合 & 1.9167 & 3.6289 & 0.8500 \\
 将模型用于2019年2月1日预测，得到61个区域、24个小时共1464条预测记录，全天总预测出租车出发需求为9785.92单。中午12时全布鲁克林预测需求为427.69单。本文在基准情形下取$\rho=1$，将其视为FHV平台可争取需求的上界输入；当实际市场份额低于该上界时，可用$D_i=\rho\hat{y}_{i,12}$对车辆规模和利润进行比例修正。
 
 
-\clearpage
 \section{问题二：约租车订单定价模型}
 
 \subsection{建模目标与参考价格思想}
@@ -339,7 +342,7 @@ FHV订单数 & 115 \\
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.82\textwidth]{pricing_economics.png}
+    \includegraphics[width=0.70\textwidth]{pricing_economics.png}
     \caption{FHV定价结果与订单经济性对比}
     \label{fig:pricing_economics}
 \end{figure}
@@ -347,7 +350,6 @@ FHV订单数 & 115 \\
 图\ref{fig:pricing_economics}表明，FHV定价整体低于出租车参考价，但仍高于估计成本，说明竞争折扣和成本底线同时起作用。该结果也解释了为什么后续车辆分配不能只看需求量，还必须结合分区利润：同样一辆车投向不同区域，其可完成订单数和单单利润可能不同，最终边际收益也不同。
 
 
-\clearpage
 \section{问题三：新增车辆区域分配模型}
 
 \subsection{建模目标与输入参数}
@@ -388,7 +390,7 @@ FHV订单数 & 115 \\
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.88\textwidth]{vehicle_allocation_profit_panel.png}
+    \includegraphics[width=0.76\textwidth]{vehicle_allocation_profit_panel.png}
     \caption{不同车辆规模下的服务覆盖与增量利润变化}
     \label{fig:vehicle_allocation_profit_panel}
 \end{figure}
@@ -412,7 +414,6 @@ FHV订单数 & 115 \\
 图\ref{fig:vehicle_allocation}显示，车辆主要投向Downtown Brooklyn/MetroTech、Brooklyn Heights、Boerum Hill、Fort Greene等需求密集且利润较高的区域。图\ref{fig:vehicle_profit_sensitivity}进一步说明，车辆规模从25辆增加到150辆时增量利润增长较快；当车辆数接近200辆后，预测需求基本被覆盖，继续增加车辆只会形成备用运力，边际收益趋于零。这一结果提示平台不宜只追求车辆数量扩张，而应根据需求饱和点设置合理备用规模。
 
 
-\clearpage
 \section{问题四：三基地选址模型}
 
 \subsection{建模目标与权重设计}
@@ -424,7 +425,7 @@ FHV订单数 & 115 \\
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.88\textwidth]{dispatch_mechanism.png}
+    \includegraphics[width=0.74\textwidth]{dispatch_mechanism.png}
     \caption{特殊车型基地出发式调度机制}
     \label{fig:dispatch_mechanism}
 \end{figure}
@@ -464,7 +465,7 @@ FHV订单数 & 115 \\
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.86\textwidth]{base_location_comparison.png}
+    \includegraphics[width=0.74\textwidth]{base_location_comparison.png}
     \caption{三基地候选方案目标值对比}
     \label{fig:base_location_comparison}
 \end{figure}
@@ -481,14 +482,15 @@ FHV订单数 & 115 \\
 表中目标函数值的单位可理解为“利润权重$\times$分钟”的相对指标，用于比较不同基地组合的派车效率，并非直接美元成本。需要说明的是，Green-Wood Cemetery和Starrett City等名称代表TLC分区，不意味着基地必须设在墓园或住宅内部。实际落地时，应在对应TLC区域内进一步筛选可停车、可充电、可调度的合法物业或路外停车设施。换言之，本文给出的是区域层面的基地布局决策，而不是具体地块选址。
 
 
-\clearpage
 \section{灵敏度分析与模型评价}
 
 \subsection{灵敏度分析}
 灵敏度分析用于检验模型结论对关键参数扰动的稳定性。本文从定价参数、车辆规模和需求转化系数三方面进行检验，分别对应价格约束、运力规模和市场份额三个不确定来源。定价方面，将最低利润率取0.10、0.15、0.20，折扣率取0.05、0.08、0.12，得到9组情形。结果表明，折扣率从5\%增至12\%时，平均FHV价格由约16.49美元降至15.27美元，平均成本口径利润率由61.27\%降至49.39\%；在当前样本下，最低利润率变化对结果影响较小，说明多数订单由出租车参考价折扣约束决定，而非成本底线决定。
 
-\begin{table}[htbp]
+\begin{table}[!htbp]
 \centering
+\small
+\setlength{\tabcolsep}{3.5pt}
 \caption{关键参数灵敏度结果}
 \label{tab:sensitivity}
 \begin{tabular}{lrr}
@@ -512,8 +514,10 @@ FHV订单数 & 115 \\
 
 除标量参数外，本文进一步构造空间扰动和派车延迟两类边界条件测试。空间扰动用于模拟核心商业区在极端天气、轨道交通中断或大型活动下出现突发需求上浮；派车延迟用于刻画道路拥堵、接驾等待和车辆再平衡不足对利润的削减。由于题目未给出真实突发事件样本，该测试不作为新的预测结果，而作为对基准方案抗风险能力的压力检验。
 
-\begin{table}[htbp]
+\begin{table}[!htbp]
 \centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
 \caption{需求转化系数$\rho$的灵敏度结果}
 \label{tab:rho_sensitivity}
 \begin{tabular}{rrrr}
@@ -528,9 +532,9 @@ $\rho$ & 中午潜在需求/单 & 饱和所需车辆数 & 利润上界/美元 \\
 \end{tabular}
 \end{table}
 
-\begin{figure}[htbp]
+\begin{figure}[!htbp]
     \centering
-    \includegraphics[width=0.88\textwidth]{spatial_robustness_sensitivity.png}
+    \includegraphics[width=0.66\textwidth]{spatial_robustness_sensitivity.png}
     \caption{需求空间冲击与派车延迟的鲁棒性测试}
     \label{fig:spatial_robustness}
 \end{figure}
@@ -547,7 +551,6 @@ $\rho$ & 中午潜在需求/单 & 饱和所需车辆数 & 利润上界/美元 \\
 模型的不足主要来自数据粒度和静态假设。首先，需求预测只基于2019年1月一个月数据，难以充分刻画跨月季节性、重大活动和极端天气影响；其次，FHV样本仅115条，本文实质上是将出租车参考价格迁移到FHV定价，且部分区域收益参数需要回填，若获得更大规模FHV成交价，可进一步训练平台专属价格模型；再次，车辆分配模型是单小时静态上界模型，未考虑接驾时间、乘客等待、车辆完成订单后的空间再分布和司机接单行为；最后，基地选址只到TLC区域层级，实际建设还需结合停车、充电、租金、法规和换班便利性进行微观选址。上述不足限制了结果向真实平台直接推广，但不影响在题目给定数据和假设下形成可解释的定量方案。
 
 
-\clearpage
 \section{结论}
 本文围绕纽约约租车平台在布鲁克林区域的运营决策问题，建立了从需求预测到基地选址的闭环模型。针对问题一，本文构造区域--小时需求面板，采用Poisson梯度提升模型与历史基线融合预测2019年2月1日需求，验证集MAE为1.9167，优于最优历史基线。针对问题二，本文以出租车历史费用为参考，结合成本底线和竞争折扣为115条FHV订单定价，平均价格为15.96美元，平均成本口径利润率为56.18\%。针对问题三，本文将中午预测需求、分区利润和单车服务能力结合，采用边际利润排序方法分配新增车辆；当$N=100$时预计增量利润为2183.85美元，当$N=200$时176辆车即可覆盖全部预测需求。针对问题四，本文建立业务价值加权$p$-中位模型，选出Brooklyn Heights、Green-Wood Cemetery所在TLC分区和Starrett City所在TLC分区作为三处基地区域，相比需求Top3方案，加权派车时间目标值降低约28.00\%。
 
