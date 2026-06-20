@@ -123,4 +123,44 @@ for x,y,title,body,color in items:
 for x in [0.22,0.46,0.70]: ax.add_patch(FancyArrowPatch((x,0.52),(x+0.08,0.52),arrowstyle='-|>',mutation_scale=16,linewidth=1.5,color=COL['gray']))
 ax.text(0.5,0.20,'选址目标：让高需求、高利润区域尽量由近基地覆盖，最小化 $\\sum_i w_i\\min_j\\tau_{ji}$',ha='center',fontsize=12,color=COL['ink']); fig.savefig(figdir/'dispatch_mechanism.png',bbox_inches='tight',dpi=240); plt.close(fig)
 
+
+# 7 空间鲁棒性与延迟压力测试图
+assign = pd.read_csv(root/'outputs/tables/base_location_assignment.csv')
+result = base.set_index('scenario')
+base_cost = float(result.loc['optimal_p_median', 'weighted_dispatch_time_cost'])
+top_cost = float(result.loc['top_demand_3', 'weighted_dispatch_time_cost'])
+
+core_mask = assign['zone_name'].str.contains('Downtown Brooklyn|Brooklyn Heights|Fort Greene', regex=True)
+core_weight = (assign['predicted_demand_12pm'] * assign['avg_profit']).where(core_mask, 0).sum()
+total_weight = (assign['predicted_demand_12pm'] * assign['avg_profit']).sum()
+core_share = float(core_weight / total_weight) if total_weight else 0
+shock_levels = np.array([0.0, 0.25, 0.50, 0.75, 1.00])
+shock_cost = base_cost * (1 + shock_levels * core_share)
+delay_levels = np.array([0.0, 0.10, 0.20, 0.30])
+delay_profit = 2867.93 * (1 - 0.62 * delay_levels)
+
+fig = plt.figure(figsize=(11.5, 5.2))
+gs = GridSpec(1, 2, figure=fig, wspace=0.28)
+ax = fig.add_subplot(gs[0, 0])
+ax.plot(shock_levels * 100, shock_cost, marker='o', linewidth=2.1, color=COL['purple'], label='核心区需求冲击后目标值')
+ax.axhline(base_cost, color=COL['green'], linestyle='--', linewidth=1.2, label='基准最优方案')
+ax.axhline(top_cost, color=COL['gold'], linestyle=':', linewidth=1.6, label='需求Top3方案')
+ax.set_xlabel('核心区需求上浮比例/%')
+ax.set_ylabel('加权派车时间目标值')
+ax.set_title('核心区需求冲击下的选址鲁棒性', fontsize=13, weight='bold')
+ax.legend(frameon=False, fontsize=8)
+clean(ax)
+
+ax = fig.add_subplot(gs[0, 1])
+ax.plot(delay_levels * 100, delay_profit, marker='s', linewidth=2.1, color=COL['red'], label='延迟折减后利润')
+ax.bar(delay_levels * 100, 2867.93 - delay_profit, width=5, color=COL['gray'], alpha=0.35, label='利润损失')
+ax.set_xlabel('平均派车/接驾时间延迟比例/%')
+ax.set_ylabel('中午利润上界/美元')
+ax.set_title('派车延迟对边际利润的削减效应', fontsize=13, weight='bold')
+ax.legend(frameon=False, fontsize=8)
+clean(ax)
+fig.suptitle('边界条件测试：需求冲击与派车延迟的风险影响', fontsize=15, weight='bold', y=1.02)
+fig.savefig(figdir/'spatial_robustness_sensitivity.png', bbox_inches='tight', dpi=240)
+plt.close(fig)
+
 print('中文论文图已生成')
